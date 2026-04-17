@@ -5,7 +5,6 @@ import { useDialogReady } from "@/hooks/useDialogReady";
 import { C3Task, TASK1_CARDS } from "@/data/chapter3";
 import { img } from "@/lib/imgPath";
 import { TokPortrait } from "./Screen1Intro";
-import { img } from "@/lib/imgPath";
 
 const ORANGE = "#f97316";
 const BRIGHT = "#fb923c";
