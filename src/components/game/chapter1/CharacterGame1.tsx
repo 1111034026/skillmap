@@ -520,7 +520,7 @@ export default function CharacterGame() {
               <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
                             pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <img
-                  src={activeDialog === "npc" ? "/img/NPC1half.png" : "/img/Maintenance workerhalf.png"}
+                  src={activeDialog === "npc" ? img("/img/NPC1half.png") : img("/img/Maintenance workerhalf.png")}
                   alt={activeDialog === "npc" ? "阿波" : "阿修"}
                   style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                            imageRendering: "pixelated", display: "block" }} />

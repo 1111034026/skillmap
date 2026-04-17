@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { C3Task, TASK1_CARDS } from "@/data/chapter3";
+import { img } from "@/lib/imgPath";
 import { TokPortrait } from "./Screen1Intro";
 import { img } from "@/lib/imgPath";
 
@@ -131,11 +132,11 @@ export default function Screen2Task1({ onDone }: Props) {
 
         {/* Drop zones */}
         <div className="flex gap-6 w-full max-w-2xl">
-          <Zone id="ai" label="AI 機器人" img="/img/chapter3task/AIrobot top view.png" color="#1d4ed8"
+          <Zone id="ai" label="AI 機器人" img={img("/img/chapter3task/AIrobot top view.png")} color="#1d4ed8"
             active={phase === "card"} dropped={dropped === "ai"}
             hoverId={hoverId} setHoverId={setHoverId}
             onDrop={() => handleDrop("ai")} />
-          <Zone id="human" label="機械工坊工人" img="/img/chapter3task/Worker top view.png" color="#7c3aed"
+          <Zone id="human" label="機械工坊工人" img={img("/img/chapter3task/Worker top view.png")} color="#7c3aed"
             active={phase === "card"} dropped={dropped === "human"}
             hoverId={hoverId} setHoverId={setHoverId}
             onDrop={() => handleDrop("human")} />

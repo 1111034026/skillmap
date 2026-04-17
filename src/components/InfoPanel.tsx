@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Skill, SkillState } from "@/types";
+import { img } from "@/lib/imgPath";
 
 const LEVEL_ROUTES: Record<string, string> = {
   "chapter-1": "/level/chapter-1",
@@ -37,10 +38,10 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
   const isCompleted = state === "completed";
   const orange = "#e85500";
 
-  const bgImg = skill.id === "chapter-4" ? "/img/BK4.png"
-              : skill.id === "chapter-3" ? "/img/BK3.png"
-              : skill.id === "chapter-2" ? "/img/BK2.png"
-              : "/img/BK1.png";
+  const bgImg = skill.id === "chapter-4" ? img("/img/BK4.png")
+              : skill.id === "chapter-3" ? img("/img/BK3.png")
+              : skill.id === "chapter-2" ? img("/img/BK2.png")
+              : img("/img/BK1.png");
 
   return (
     <div className="h-full font-mono relative overflow-hidden" style={{ borderTop: `2px solid ${orange}55` }}>
