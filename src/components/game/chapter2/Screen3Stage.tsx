@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { C2Element, C2Theme, StageItem, StageResult } from "@/data/chapter2";
+import { img } from "@/lib/imgPath";
 
 const GREEN = "#16a34a";
 const BRIGHT = "#4ade80";
@@ -413,7 +414,7 @@ function LumiPortrait() {
   return (
     <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
                   pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <img src="/img/Lumihalf.png" alt="露米"
+      <img src={img("/img/Lumihalf.png")} alt="露米"
         style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                  imageRendering: "pixelated", display: "block" }} />
       <div className="w-full text-center px-4 py-1 text-xs font-bold"

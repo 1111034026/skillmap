@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { C3Task, TASK1_CARDS } from "@/data/chapter3";
 import { TokPortrait } from "./Screen1Intro";
+import { img } from "@/lib/imgPath";
 
 const ORANGE = "#f97316";
 const BRIGHT = "#fb923c";
@@ -87,7 +88,7 @@ export default function Screen2Task1({ onDone }: Props) {
 
         {/* Conveyor belt with task card on top */}
         <div style={{ position: "relative", width: 820 }}>
-          <img src="/img/chapter3task/conveyor top view.png" alt="輸送帶" draggable={false}
+          <img src={img("/img/chapter3task/conveyor top view.png")} alt="輸送帶" draggable={false}
             style={{ width: "100%", imageRendering: "pixelated", pointerEvents: "none", display: "block" }} />
 
           {/* Task card sitting on conveyor */}
@@ -105,7 +106,7 @@ export default function Screen2Task1({ onDone }: Props) {
               userSelect: "none",
               zIndex: 2,
             }}>
-            <img src="/img/chapter3task/card.png" alt="" draggable={false}
+            <img src={img("/img/chapter3task/card.png")} alt="" draggable={false}
               style={{ width: "100%", display: "block", imageRendering: "pixelated", pointerEvents: "none",
                 filter: phase === "feedback" ? (isCorrect ? "sepia(1) hue-rotate(80deg) saturate(2)" : "sepia(1) hue-rotate(300deg) saturate(3)") : "none",
                 transition: "filter 0.3s" }} />

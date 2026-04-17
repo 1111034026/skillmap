@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { img } from "@/lib/imgPath";
 
 interface Props {
   onStart: () => void;
@@ -24,7 +25,7 @@ export default function Screen1Mission({ onStart }: Props) {
 
         {/* Bulletin board */}
         <div className="absolute" style={{ left: "12%", top: "15%", width: 160, height: 140 }}>
-          <img src="/img/bulletin_board.png" alt="公告板" draggable={false}
+          <img src={img("/img/bulletin_board.png")} alt="公告板" draggable={false}
             style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated" }} />
         </div>
 
@@ -37,13 +38,13 @@ export default function Screen1Mission({ onStart }: Props) {
           >
             !
           </div>
-          <img src="/img/NPC1.png" alt="阿波" draggable={false}
+          <img src={img("/img/NPC1.png")} alt="阿波" draggable={false}
             style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated" }} />
         </div>
 
         {/* Player */}
         <div className="absolute" style={{ right: "18%", bottom: 80, width: 150, height: 150 }}>
-          <img src="/img/front_sprite.png" alt="玩家" draggable={false}
+          <img src={img("/img/front_sprite.png")} alt="玩家" draggable={false}
             style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated" }} />
         </div>
       </div>
@@ -59,7 +60,7 @@ export default function Screen1Mission({ onStart }: Props) {
           }}
         >
           <div className="flex items-center gap-2 mb-3">
-            <img src="/img/NPC1.png" alt="阿波" className="w-10 h-10 object-contain"
+            <img src={img("/img/NPC1.png")} alt="阿波" className="w-10 h-10 object-contain"
               style={{ imageRendering: "pixelated" }} />
             <p className="text-xs font-bold" style={{ color: "#60a5fa" }}>⚓ 船長阿波</p>
           </div>

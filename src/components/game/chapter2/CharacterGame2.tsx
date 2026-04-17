@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
 
@@ -267,14 +268,14 @@ export default function CharacterGame2() {
         {artworkData && <StageArtwork data={artworkData} cw={cw} ch={ch} />}
 
         {/* Stage */}
-        <img src="/img/stage.png" alt="舞台" draggable={false}
+        <img src={img("/img/stage.png")} alt="舞台" draggable={false}
           style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: (50 / 810) * ch, width: (500 / 1440) * cw, height: "auto",
                    imageRendering: "pixelated", zIndex: 4 }} />
 
         {/* Design Machine */}
         <div className="absolute" style={{ left: DM_POS.x * cw, top: DM_POS.y * ch, width: DM_POS.width * cw, zIndex: 4 }}
           onClick={() => { if (nearDMRef.current && lumiDialogDoneRef.current && !ch2CompleteRef.current) setMissionReady(true); }}>
-          <img src="/img/design machine.png" alt="AI設計機" draggable={false}
+          <img src={img("/img/design machine.png")} alt="AI設計機" draggable={false}
             style={{ width: DM_POS.width * cw, height: "auto", imageRendering: "pixelated", display: "block" }} />
           {lumiDialogDone && !ch2Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
@@ -294,7 +295,7 @@ export default function CharacterGame2() {
             if (activeDialogRef.current) { advanceDialog(); return; }
             openLumiDialog();
           }}>
-          <img src="/img/Lumi..png" alt="露米" draggable={false}
+          <img src={img("/img/Lumi..png")} alt="露米" draggable={false}
             style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated",
                      filter: nearLumi ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!lumiDialogDone || (ch2Complete && !lumiAfterDone)) && (
@@ -359,7 +360,7 @@ export default function CharacterGame2() {
               {/* Portrait */}
               <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
                             pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img src="/img/Lumihalf.png" alt="露米"
+                <img src={img("/img/Lumihalf.png")} alt="露米"
                   style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                            imageRendering: "pixelated", display: "block" }} />
                 <div className="w-full text-center px-4 py-1 text-xs font-bold"

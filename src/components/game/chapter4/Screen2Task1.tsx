@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { APPLE_CARDS, BANANA_CARDS, FoodCard } from "@/data/chapter4";
 import { MiaPortrait } from "./MiaPortrait";
+import { img } from "@/lib/imgPath";
 
 const GREEN  = "#22c55e";
 const BRIGHT = "#4ade80";
@@ -123,7 +124,7 @@ export default function Screen2Task1({ onDone }: Props) {
               filter: hovering ? `brightness(1.3) drop-shadow(0 0 12px ${GREEN})` : isDone ? `drop-shadow(0 0 8px ${GREEN})` : "brightness(1)",
               transform: hovering ? "scale(1.05)" : "scale(1)",
             }}>
-            <img src="/img/Classification robot.png" alt="食物分類機" draggable={false}
+            <img src={img("/img/Classification robot.png")} alt="食物分類機" draggable={false}
               style={{ width: 280, height: "auto", imageRendering: "pixelated", display: "block" }} />
           </div>
           {placed.length > 0 && (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Question } from "@/data/chapter1";
 import DragCard from "./DragCard";
 import DropZone from "./DropZone";
+import { img } from "@/lib/imgPath";
 
 type Zone = "hand" | "usable" | "review" | "unsuitable";
 
@@ -130,7 +131,7 @@ export default function Screen3Game({ question, questionIndex, total, onCorrect,
               display: "flex", flexDirection: "column", alignItems: "center",
               pointerEvents: "none", zIndex: 2,
             }}>
-              <img src="/img/NPC1half.png" alt="阿波"
+              <img src={img("/img/NPC1half.png")} alt="阿波"
                 style={{ width: 90, height: 90, objectFit: "contain", objectPosition: "bottom", imageRendering: "pixelated", display: "block" }} />
               <div className="w-full text-center px-2 py-0.5 text-sm font-bold"
                 style={{ background: "#1e3a8a", border: `2px solid ${ORANGE}`, color: "#93c5fd" }}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
 
@@ -406,7 +407,7 @@ export default function CharacterGame() {
           style={{ right: CLS_POS.right * cw, top: CLS_POS.top * ch, width: CLS_POS.width * cw, zIndex: 4,
                    cursor: mwDialogDone && !clsTaskDone ? "pointer" : "default" }}
           onClick={() => { if (mwDialogDone && !clsTaskDone) setClassifierReady(true); }}>
-          <img src="/img/Classifier.png" alt="分類器" draggable={false}
+          <img src={img("/img/Classifier.png")} alt="分類器" draggable={false}
             style={{ width: "100%", height: "auto", imageRendering: "pixelated",
                      filter: nearClassifier && mwDialogDone && !clsTaskDone ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {mwDialogDone && !clsTaskDone && (
@@ -422,15 +423,15 @@ export default function CharacterGame() {
         </div>
 
         {/* Boat */}
-        <img src="/img/boat.png" alt="船" draggable={false}
+        <img src={img("/img/boat.png")} alt="船" draggable={false}
           style={{ position: "absolute", left: BOAT_POS.left * cw, top: BOAT_POS.top * ch, width: BOAT_POS.width * cw, height: "auto", imageRendering: "pixelated", zIndex: 2, animation: "bob1 3.2s ease-in-out infinite" }} />
 
         {/* Shop */}
-        <img src="/img/shop.png" alt="商店" draggable={false}
+        <img src={img("/img/shop.png")} alt="商店" draggable={false}
           style={{ position: "absolute", left: SHOP_POS.left * cw, top: SHOP_POS.top * ch, width: SHOP_POS.width * cw, height: "auto", imageRendering: "pixelated", zIndex: 3 }} />
 
         {/* Factory */}
-        <img src="/img/factory.png" alt="工廠" draggable={false}
+        <img src={img("/img/factory.png")} alt="工廠" draggable={false}
           style={{ position: "absolute", right: FACTORY_POS.right * cw, top: FACTORY_POS.top * ch, width: FACTORY_POS.width * cw, height: "auto", imageRendering: "pixelated", zIndex: 3 }} />
 
         {/* Maintenance Worker */}
@@ -442,7 +443,7 @@ export default function CharacterGame() {
             if (clsTaskDoneRef.current && !clsAfterDoneRef.current) { openMwAfterDialog(); return; }
             openMwDialog();
           }}>
-          <img src="/img/Maintenance worker.png" alt="維修工阿修" draggable={false}
+          <img src={img("/img/Maintenance worker.png")} alt="維修工阿修" draggable={false}
             style={{ width: "100%", height: "auto", imageRendering: "pixelated",
                      filter: nearMW && ((npcAfterDone && !mwDialogDone) || (clsTaskDone && !clsAfterDone)) ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {((npcAfterDone && !mwDialogDone) || (clsTaskDone && !clsAfterDone)) && (
@@ -467,7 +468,7 @@ export default function CharacterGame() {
         <div className="absolute"
           style={{ left: BOARD.x * cw, top: BOARD.y * ch, width: BOARD.w * cw, height: BOARD.h * ch, zIndex: 5, cursor: "pointer" }}
           onClick={() => { if (npcDialogDone && !missionComplete) setMissionReady(true); }}>
-          <img src="/img/bulletin_board.png" alt="公告板" draggable={false}
+          <img src={img("/img/bulletin_board.png")} alt="公告板" draggable={false}
             style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated",
                      filter: nearBoard ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {npcDialogDone && !missionComplete && (
@@ -487,7 +488,7 @@ export default function CharacterGame() {
           style={{ left: NPC.x * cw, top: NPC.y * ch, width: NPC_SIZE_PCT * ch, height: NPC_SIZE_PCT * ch, zIndex: 5,
                    cursor: "pointer" }}
           onClick={() => { if (activeDialogRef.current === "npc") advanceDialog(); else openNpcDialog(); }}>
-          <img src="/img/NPC1.png" alt="NPC" draggable={false}
+          <img src={img("/img/NPC1.png")} alt="NPC" draggable={false}
             style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated",
                      filter: nearNpc ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!npcDialogDone || (missionComplete && !npcAfterDone) || (clsAfterDone && !finalDone)) && (

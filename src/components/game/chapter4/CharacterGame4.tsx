@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
 
@@ -226,7 +227,7 @@ export default function CharacterGame4() {
           style={{ left: MACHINE_POS.x * cw, top: MACHINE_POS.y * ch, width: MACHINE_POS.width * cw, zIndex: 4,
                    cursor: miaDialogDone && !ch4Complete ? "pointer" : "default" }}
           onClick={() => { if (nearMachineRef.current && miaDialogDoneRef.current && !ch4CompleteRef.current) setMissionReady(true); }}>
-          <img src="/img/Classification robot.png" alt="食物分類機" draggable={false}
+          <img src={img("/img/Classification robot.png")} alt="食物分類機" draggable={false}
             style={{ width: "100%", height: "auto", imageRendering: "pixelated",
                      filter: nearMachine ? "brightness(1.2)" : "brightness(1)", transition: "filter 0.3s" }} />
           {miaDialogDone && !ch4Complete && (
@@ -245,7 +246,7 @@ export default function CharacterGame4() {
         <div className="absolute"
           style={{ left: MIA_POS.x * cw, top: MIA_POS.y * ch, width: NPC_SIZE_PCT * ch, zIndex: 5, cursor: "pointer" }}
           onClick={() => { if (activeDialogRef.current) { advanceDialog(); return; } openMiaDialog(); }}>
-          <img src="/img/Mia.png" alt="米亞" draggable={false}
+          <img src={img("/img/Mia.png")} alt="米亞" draggable={false}
             style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated",
                      filter: nearMia ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!miaDialogDone || (ch4Complete && !miaAfterDone)) && (
@@ -308,7 +309,7 @@ export default function CharacterGame4() {
             <div className="relative max-w-6xl mx-auto" style={{ cursor: "pointer" }}>
               <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
                             pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img src="/img/Miahalf.png" alt="米亞"
+                <img src={img("/img/Miahalf.png")} alt="米亞"
                   style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                            imageRendering: "pixelated", display: "block" }} />
                 <div className="w-full text-center px-4 py-1 text-xs font-bold"

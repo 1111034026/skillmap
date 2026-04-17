@@ -8,7 +8,7 @@ export function MiaPortrait() {
       position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
       pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center",
     }}>
-      <img src="/img/Miahalf.png" alt="米亞"
+      <img src={img("/img/Miahalf.png")} alt="米亞"
         style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                  imageRendering: "pixelated", display: "block" }} />
       <div className="w-full text-center px-4 py-1 text-xs font-bold"

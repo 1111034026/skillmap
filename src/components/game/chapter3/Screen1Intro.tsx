@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import { img } from "@/lib/imgPath";
 
 const ORANGE = "#f97316";
 const BRIGHT = "#fb923c";
@@ -115,7 +116,7 @@ export function TokPortrait() {
   return (
     <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
                   pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <img src="/img/Tuckerhalf.png" alt="托克"
+      <img src={img("/img/Tuckerhalf.png")} alt="托克"
         style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                  imageRendering: "pixelated", display: "block" }} />
       <div className="w-full text-center px-4 py-1 text-xs font-bold"
@@ -128,7 +129,7 @@ export function TokPortrait() {
 
 export function TokSprite({ size }: { size: number }) {
   return (
-    <img src="/img/Tucker.png" alt="托克"
+    <img src={img("/img/Tucker.png")} alt="托克"
       style={{ width: size, height: size, objectFit: "contain", objectPosition: "bottom",
                imageRendering: "pixelated", display: "block" }} />
   );

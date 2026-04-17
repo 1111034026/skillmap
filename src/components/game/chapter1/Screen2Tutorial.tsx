@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TUTORIAL_QUESTION } from "@/data/chapter1";
 import DragCard from "./DragCard";
 import DropZone from "./DropZone";
+import { img } from "@/lib/imgPath";
 
 type Zone = "hand" | "usable" | "review" | "unsuitable";
 
@@ -167,7 +168,7 @@ export default function Screen2Tutorial({ onDone }: Props) {
             <span style={{ position: "absolute", bottom: -2, left: -2, width: 12, height: 12, borderBottom: `3px solid ${ORANGE}`, borderLeft: `3px solid ${ORANGE}` }} />
             <span style={{ position: "absolute", bottom: -2, right: -2, width: 12, height: 12, borderBottom: `3px solid ${ORANGE}`, borderRight: `3px solid ${ORANGE}` }} />
             <div className="px-4 py-1 flex items-center gap-2" style={{ borderBottom: `1px solid rgba(0,170,255,0.3)`, background: "rgba(0,170,255,0.12)" }}>
-              <img src="/img/NPC1.png" alt="阿波" className="w-5 h-5 object-contain" style={{ imageRendering: "pixelated" }} />
+              <img src={img("/img/NPC1.png")} alt="阿波" className="w-5 h-5 object-contain" style={{ imageRendering: "pixelated" }} />
               <span className="text-xs font-bold tracking-widest" style={{ color: ORANGE }}>⚓ 船長阿波</span>
             </div>
             <div className="px-5 py-4">

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
 
@@ -271,7 +272,7 @@ export default function CharacterGame3() {
           style={{ left: BOARD_POS.x * cw, top: BOARD_POS.y * ch, width: BOARD_POS.width * cw, zIndex: 4,
                    cursor: tokDialogDone && !ch3Complete ? "pointer" : "default" }}
           onClick={() => { if (nearBoardRef.current && tokDialogDoneRef.current && !ch3CompleteRef.current) setMissionReady(true); }}>
-          <img src="/img/conveyor.png" alt="輸送帶" draggable={false}
+          <img src={img("/img/conveyor.png")} alt="輸送帶" draggable={false}
             style={{ width: "100%", height: "auto", imageRendering: "pixelated",
                      filter: nearBoard ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {tokDialogDone && !ch3Complete && (
@@ -287,12 +288,12 @@ export default function CharacterGame3() {
         </div>
 
         {/* AIrobot near conveyor */}
-        <img src="/img/AIrobot.png" alt="AI機器人" draggable={false}
+        <img src={img("/img/AIrobot.png")} alt="AI機器人" draggable={false}
           style={{ position: "absolute", left: (BOARD_POS.x - 0.015) * cw, top: (BOARD_POS.y - 0.15) * ch,
                    width: "auto", height: CHAR_SIZE_PCT * ch, imageRendering: "pixelated", zIndex: 3, pointerEvents: "none" }} />
 
         {/* Worker near conveyor */}
-        <img src="/img/Worker.png" alt="機械工坊工人" draggable={false}
+        <img src={img("/img/Worker.png")} alt="機械工坊工人" draggable={false}
           style={{ position: "absolute", left: (BOARD_POS.x + BOARD_POS.width - 0.23) * cw, top: (BOARD_POS.y - 0.15) * ch,
                    width: "auto", height: CHAR_SIZE_PCT * ch, imageRendering: "pixelated", zIndex: 3, pointerEvents: "none" }} />
 
@@ -303,7 +304,7 @@ export default function CharacterGame3() {
             if (activeDialogRef.current) { advanceDialog(); return; }
             openTokDialog();
           }}>
-          <img src="/img/Tucker.png" alt="托克" draggable={false}
+          <img src={img("/img/Tucker.png")} alt="托克" draggable={false}
             style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated",
                      filter: nearTok ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!tokDialogDone || (ch3Complete && !tokAfterDone)) && (
@@ -367,7 +368,7 @@ export default function CharacterGame3() {
               {/* Portrait */}
               <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
                             pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img src="/img/Tuckerhalf.png" alt="托克"
+                <img src={img("/img/Tuckerhalf.png")} alt="托克"
                   style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
                            imageRendering: "pixelated", display: "block" }} />
                 <div className="w-full text-center px-4 py-1 text-xs font-bold"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CLASSIFIER_QUESTIONS } from "@/data/classifier";
+import { img } from "@/lib/imgPath";
 
 type Screen = "game" | "correct" | "wrong" | "complete";
 
@@ -13,7 +14,7 @@ const YELLOW = "#FFB800";
 
 const NPC = () => (
   <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2, pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-    <img src="/img/Maintenance workerhalf.png" alt="阿修"
+    <img src={img("/img/Maintenance workerhalf.png")} alt="阿修"
       style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom", imageRendering: "pixelated", display: "block" }} />
     <div className="w-full text-center px-4 py-1 text-xs font-bold"
       style={{ background: "#1e3a8a", border: "2px solid #3b82f6", color: "#93c5fd" }}>

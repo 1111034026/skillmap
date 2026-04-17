@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { img } from "@/lib/imgPath";
 
 interface Props {
   total: number;
@@ -47,7 +48,7 @@ export default function Screen6Complete({ total }: Props) {
       <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}>
         <div className="relative max-w-6xl mx-auto">
           <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2, pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <img src="/img/NPC1half.png" alt="阿波"
+            <img src={img("/img/NPC1half.png")} alt="阿波"
               style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom", imageRendering: "pixelated", display: "block" }} />
             <div className="w-full text-center px-4 py-1 text-xs font-bold"
               style={{ background: "#1e3a8a", border: "2px solid #3b82f6", color: "#93c5fd" }}>

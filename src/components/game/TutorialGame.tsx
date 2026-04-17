@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { img } from "@/lib/imgPath";
 
 type Zone = "hand" | "usable" | "unsuitable";
 
@@ -214,7 +215,7 @@ export default function TutorialGame() {
             }}
           >
             <div className="flex items-center gap-2 mb-3">
-              <img src="/img/NPC1.png" alt="阿波" className="w-10 h-10 rounded-full object-cover" style={{ imageRendering: "pixelated" }} />
+              <img src={img("/img/NPC1.png")} alt="阿波" className="w-10 h-10 rounded-full object-cover" style={{ imageRendering: "pixelated" }} />
               <p className="text-xs font-bold" style={{ color: "#60a5fa" }}>⚓ 船長阿波</p>
             </div>
             <p className="text-white text-sm leading-relaxed mb-4">
