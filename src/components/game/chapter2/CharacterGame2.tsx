@@ -82,7 +82,7 @@ export default function CharacterGame2() {
   const keysRef      = useRef<Set<string>>(new Set());
   const rafRef       = useRef<number>(0);
 
-  const getSprite = (d: Direction) => `/img/${d}_sprite.png`;
+  const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
 
   const currentLines = ch2CompleteRef.current && !lumiAfterDoneRef.current
     ? LUMI.dialogAfter

@@ -31,9 +31,10 @@ export interface C2Theme {
   props: C2Element[];
 }
 
-const BG = "/img/chapter2background";
-const CH = "/img/chapter2character";
-const PR = "/img/chapter2prop";
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const BG = `${BASE}/img/chapter2background`;
+const CH = `${BASE}/img/chapter2character`;
+const PR = `${BASE}/img/chapter2prop`;
 
 export const C2_THEMES: C2Theme[] = [
   {

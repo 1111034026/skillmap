@@ -63,7 +63,7 @@ export default function CharacterGame4() {
   const nearMiaRef     = useRef(false);
   const nearMachineRef = useRef(false);
 
-  const getSprite = (d: Direction) => `/img/${d}_sprite.png`;
+  const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
 
   const currentLines = ch4CompleteRef.current && !miaAfterDoneRef.current
     ? MIA_DIALOG_AFTER : MIA_DIALOG;

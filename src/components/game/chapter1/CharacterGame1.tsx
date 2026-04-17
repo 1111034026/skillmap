@@ -117,7 +117,7 @@ export default function CharacterGame() {
   const keysRef      = useRef<Set<string>>(new Set());
   const rafRef       = useRef<number>(0);
 
-  const getSprite = (d: Direction) => `/img/${d}_sprite.png`;
+  const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
 
   // ── Dialog ready lock (1.5s after each new line) ─────────────────────────
   const { ready, readyRef } = useDialogReady(
