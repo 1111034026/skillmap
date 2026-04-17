@@ -1,26 +1,134 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a1a;
+  --foreground: #e2e8f0;
+  --font-pixel: "Press Start 2P", monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  /* 全域像素風格：移除圓角、使用像素字型 */
+  font-family: var(--font-pixel), "Courier New", monospace;
+  border-radius: 0 !important;
+  image-rendering: pixelated;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  height: 100svh;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+html {
+  height: 100%;
+}
+
+/* 像素風捲軸 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0a0a1a; }
+::-webkit-scrollbar-thumb { background: #334155; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* 像素風按鈕按下效果 */
+button:active:not(:disabled) {
+  transform: translate(2px, 2px) !important;
+}
+
+/* 像素邊框工具類 */
+.pixel-border {
+  box-shadow:
+    -2px 0 0 0 currentColor,
+     2px 0 0 0 currentColor,
+     0 -2px 0 0 currentColor,
+     0  2px 0 0 currentColor;
+}
+
+/* 關閉 tailwind 的 smooth 動畫（像素風不需要） */
+* {
+  transition-timing-function: steps(1) !important;
+}
+
+/* 保留必要的 transition（移動、顏色） */
+.allow-transition {
+  transition-timing-function: linear !important;
+}
+
+/* 終端機格線背景 */
+.terminal-bg {
+  background-color: #080810;
+  background-image:
+    linear-gradient(rgba(0,170,255,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,170,255,0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* 橘色霓虹文字發光 */
+.neon-text {
+  color: #00AAFF;
+  text-shadow: 0 0 8px #00AAFFaa;
+}
+
+/* 橘色邊框面板 */
+.terminal-panel {
+  border: 2px solid #00AAFF;
+  box-shadow: 0 0 0 1px #00AAFF33, 4px 4px 0px #00AAFF55;
+  background: rgba(0,170,255,0.06);
+}
+
+/* 掃描線覆蓋 */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,0.15) 3px,
+    rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none;
+}
+
+/* 對話框文字右邊距 */
+.dialog-text {
+  padding-right: clamp(90px, min(14vw, 18vh), 260px);
+}
+
+/* 對話框面板：小螢幕縮小高度和 padding */
+.dialog-panel {
+  min-height: clamp(70px, 11vh, 150px) !important;
+  padding-top: clamp(10px, 1.5vh, 24px) !important;
+  padding-bottom: clamp(10px, 1.5vh, 24px) !important;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes flash {
+  0%,100% { filter: brightness(1); }
+  50% { filter: brightness(2) saturate(0.3); }
 }
