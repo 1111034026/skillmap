@@ -1,6 +1,6 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
@@ -33,7 +33,6 @@ const MIA_DIALOG_AFTER: string[] = [
 ];
 
 export default function CharacterGame4() {
-  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const cwRef = useRef(1440);
   const chRef = useRef(810);
@@ -276,7 +275,7 @@ export default function CharacterGame4() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(4,18,8,0.98)", border: `3px solid ${GREEN}`, boxShadow: `4px 4px 0px ${GREEN}44` }}>
-              <button onClick={() => { router.push("/level/chapter-4/game"); }}
+              <button onClick={() => { navigate("/level/chapter-4/game"); }}
                 className="w-full py-3 font-bold text-sm"
                 style={{ background: `${GREEN}22`, border: `3px solid ${GREEN}`, color: BRIGHT, boxShadow: "4px 4px 0px #000" }}>
                 開始訓練 →
@@ -297,7 +296,7 @@ export default function CharacterGame4() {
             <div className="flex flex-col items-center gap-5 w-full max-w-sm px-4 py-8"
               style={{ background: "rgba(5,32,16,0.98)", border: `3px solid ${GREEN}`, boxShadow: `6px 6px 0px ${GREEN}44` }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: GREEN }}>[ 任務完成 ]</p>
-              <button onClick={() => { router.push("/"); }}
+              <button onClick={() => { navigate("/"); }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${GREEN}20`, border: `2px solid ${GREEN}`, color: BRIGHT }}>
                 返回地圖

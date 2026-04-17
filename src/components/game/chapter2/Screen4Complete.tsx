@@ -1,6 +1,6 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
-import { useRouter } from "next/navigation";
 import { C2Element, C2Theme, StageResult } from "@/data/chapter2";
 
 const GREEN = "#16a34a";
@@ -22,7 +22,6 @@ export default function Screen4Complete({ theme, background, character, prop, st
   const scaleX = PREVIEW_W / stageW;
   const scaleY = PREVIEW_H / stageH;
   const scale  = Math.min(scaleX, scaleY);
-  const router = useRouter();
 
   return (
     <div className="flex flex-col h-svh items-center justify-center gap-8 px-6 relative"
@@ -117,7 +116,7 @@ export default function Screen4Complete({ theme, background, character, prop, st
             stageH: stageResult.stageH,
             backgroundId: background.id,
           }));
-          router.push("/level/chapter-2");
+          navigate("/level/chapter-2");
         }}
         className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
         style={{ background: `${GREEN}20`, border: `2px solid ${GREEN}`, boxShadow: `4px 4px 0px ${GREEN}44`, color: BRIGHT }}>

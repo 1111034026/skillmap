@@ -1,6 +1,6 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
-import { useRouter } from "next/navigation";
 import { img } from "@/lib/imgPath";
 
 interface Props {
@@ -11,7 +11,6 @@ const ORANGE = "#00AAFF";
 const GREEN = "#00FF88";
 
 export default function Screen6Complete({ total }: Props) {
-  const router = useRouter();
 
   return (
     <div className="terminal-bg scanlines flex flex-col h-svh items-center justify-center px-4 gap-6 relative"
@@ -37,7 +36,7 @@ export default function Screen6Complete({ total }: Props) {
       <button
         onClick={() => {
           localStorage.setItem("chapter1_complete", "1");
-          router.push("/level/chapter-1");
+          navigate("/level/chapter-1");
         }}
         className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
         style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${ORANGE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: ORANGE }}>

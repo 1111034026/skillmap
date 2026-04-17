@@ -1,7 +1,7 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { CLASSIFIER_QUESTIONS } from "@/data/classifier";
 import { img } from "@/lib/imgPath";
 
@@ -24,7 +24,6 @@ const NPC = () => (
 );
 
 export default function ClassifierGame() {
-  const router = useRouter();
   const [qIndex, setQIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("game");
 
@@ -156,7 +155,7 @@ export default function ClassifierGame() {
 
         <button onClick={() => {
             localStorage.setItem("classifier_complete", "1");
-            router.push("/level/chapter-1");
+            navigate("/level/chapter-1");
           }}
           className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
           style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${BLUE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: BLUE }}>

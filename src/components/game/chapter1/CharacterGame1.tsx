@@ -1,6 +1,6 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
@@ -67,7 +67,6 @@ const MW_DIALOG = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CharacterGame() {
-  const router = useRouter();
   // Container dimensions (percentage-based positioning)
   const cwRef = useRef(1440);
   const chRef = useRef(810);
@@ -560,12 +559,12 @@ export default function CharacterGame() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #3b82f6", boxShadow: "4px 4px 0px #1e3a8a" }}>
-              <button onClick={() => { router.push("/level/chapter-1/play"); }}
+              <button onClick={() => { navigate("/level/chapter-1/play"); }}
                 className="w-full py-3 font-bold text-white text-sm"
                 style={{ background: "#2563eb", border: "3px solid #1e3a8a", boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
               </button>
-              <button onClick={() => { router.push("/level/chapter-1"); }}
+              <button onClick={() => { navigate("/level/chapter-1"); }}
                 className="w-full py-2 text-sm"
                 style={{ background: "rgba(255,255,255,0.06)", border: "2px solid rgba(255,255,255,0.4)", color: "#9ca3af", boxShadow: "2px 2px 0px #000" }}>
                 返回
@@ -582,7 +581,7 @@ export default function CharacterGame() {
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #60a5fa", boxShadow: "6px 6px 0px rgba(96,165,250,0.3)" }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: "#60a5fa" }}>[ 任務完成 ]</p>
               <button
-                onClick={() => { router.push("/"); }}
+                onClick={() => { navigate("/"); }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: "rgba(96,165,250,0.15)", border: "2px solid #60a5fa", color: "#60a5fa" }}>
                 返回地圖
@@ -597,7 +596,7 @@ export default function CharacterGame() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #3b82f6", boxShadow: "4px 4px 0px #1e3a8a" }}>
-              <button onClick={() => { router.push("/level/chapter-2/play"); }}
+              <button onClick={() => { navigate("/level/chapter-2/play"); }}
                 className="w-full py-3 font-bold text-white text-sm"
                 style={{ background: "#2563eb", border: "3px solid #1e3a8a", boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →

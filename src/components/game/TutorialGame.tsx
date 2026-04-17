@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { img } from "@/lib/imgPath";
 
 type Zone = "hand" | "usable" | "unsuitable";
@@ -13,7 +12,6 @@ const CARDS = [
 ];
 
 export default function TutorialGame() {
-  const router = useRouter();
   const [placements, setPlacements] = useState<Record<string, Zone>>({
     gym: "hand", library: "hand", slide: "hand",
   });
@@ -79,7 +77,7 @@ export default function TutorialGame() {
         style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
       >
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="text-gray-400 hover:text-white text-sm transition-colors"
         >
           ← 返回
@@ -223,7 +221,7 @@ export default function TutorialGame() {
               我們要先想一想：這個建議和現在的需要有沒有真的對上。
             </p>
             <button
-              onClick={() => router.back()}
+              onClick={() => window.history.back()}
               className="w-full py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-95"
               style={{ background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", color: "#fff" }}
             >

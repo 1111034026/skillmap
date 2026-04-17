@@ -1,8 +1,8 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
 import { useState, useEffect } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
-import { useRouter } from "next/navigation";
 import { MiaPortrait } from "./MiaPortrait";
 
 const GREEN  = "#22c55e";
@@ -19,7 +19,6 @@ const MIA_OUTRO = [
 interface Props { onDone: () => void; }
 
 export default function Screen6Complete({ onDone }: Props) {
-  const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [dialogDone, setDialogDone] = useState(false);
 
@@ -73,7 +72,7 @@ export default function Screen6Complete({ onDone }: Props) {
                      animation: "fadeUp 0.3s ease" }}>
             ▶ 回到智能動物園
           </button>
-          <button onClick={() => router.push("/")}
+          <button onClick={() => navigate("/")}
             className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
             style={{ background: `rgba(34,197,94,0.06)`, border: `2px solid ${GREEN}55`,
                      color: `${GREEN}99`, animation: "fadeUp 0.3s ease" }}>

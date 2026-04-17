@@ -1,7 +1,7 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Screen2Task1 from "./Screen2Task1";
 import Screen3Test1 from "./Screen3Test1";
 import Screen4Task2 from "./Screen4Task2";
@@ -10,12 +10,11 @@ import Screen5Test2 from "./Screen5Test2";
 type Screen = "task1" | "test1" | "task2" | "test2";
 
 export default function Chapter4Level() {
-  const router = useRouter();
   const [screen, setScreen] = useState<Screen>("task1");
 
   const handleComplete = () => {
     try { localStorage.setItem("chapter4_complete", "1"); } catch { /* ignore */ }
-    router.push("/level/chapter-4");
+    navigate("/level/chapter-4");
   };
 
   return (

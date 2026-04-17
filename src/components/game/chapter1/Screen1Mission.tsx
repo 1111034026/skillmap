@@ -1,6 +1,6 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
-import { useRouter } from "next/navigation";
 import { img } from "@/lib/imgPath";
 
 interface Props {
@@ -8,7 +8,6 @@ interface Props {
 }
 
 export default function Screen1Mission({ onStart }: Props) {
-  const router = useRouter();
 
   return (
     <div className="flex flex-col h-svh relative" style={{ background: "#0c1a2e" }}>
@@ -79,7 +78,7 @@ export default function Screen1Mission({ onStart }: Props) {
           開始任務
         </button>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => navigate("/")}
           className="w-full py-3 font-semibold text-sm transition-all hover:brightness-110 active:scale-95"
           style={{ background: "rgba(255,255,255,0.06)", border: "2px solid rgba(255,255,255,0.4)", color: "#9ca3af", boxShadow: "2px 2px 0px #000" }}
         >

@@ -1,6 +1,6 @@
 "use client";
+import { navigate } from "@/lib/navigate";
 
-import { useRouter } from "next/navigation";
 import { Skill, SkillState } from "@/types";
 import { img } from "@/lib/imgPath";
 
@@ -18,7 +18,6 @@ interface Props {
 }
 
 export default function InfoPanel({ skill, state, onComplete }: Props) {
-  const router = useRouter();
 
   if (!skill || !state) {
     return (
@@ -91,7 +90,7 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
             disabled={isLocked}
             onClick={() => {
               const route = LEVEL_ROUTES[skill.id];
-              if (route) router.push(route);
+              if (route) navigate(route);
             }}
             className="px-6 py-2 text-sm font-bold tracking-widest transition-all hover:brightness-125 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
