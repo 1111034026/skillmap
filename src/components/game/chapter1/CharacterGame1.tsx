@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
@@ -388,7 +389,7 @@ export default function CharacterGame() {
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-3 flex-shrink-0"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <a href="/" className="text-gray-400 hover:text-white text-sm transition-colors">← 返回地圖</a>
+        <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors">← 返回地圖</Link>
         <span className="text-gray-600">|</span>
         <span className="text-white font-bold">🏙️ 回聲港</span>
         <div className="ml-auto flex items-center gap-2 px-3 py-1 text-xs"
