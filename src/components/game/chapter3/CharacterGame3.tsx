@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
@@ -39,6 +40,7 @@ const TOK = {
 };
 
 export default function CharacterGame3() {
+  const router = useRouter();
   const cwRef = useRef(1440);
   const chRef = useRef(810);
   const [cw, setCw] = useState(1440);
@@ -332,7 +334,7 @@ export default function CharacterGame3() {
             style={{ background: "rgba(0,0,0,0.6)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(12,15,26,0.98)", border: `3px solid ${ORANGE}`, boxShadow: `4px 4px 0px ${ORANGE}44` }}>
-              <button onClick={() => { window.location.href = "/level/chapter-3/game"; }}
+              <button onClick={() => { router.push("/level/chapter-3/game"); }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${ORANGE}22`, border: `3px solid ${ORANGE}`, color: BRIGHT, boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
@@ -353,7 +355,7 @@ export default function CharacterGame3() {
             <div className="flex flex-col items-center gap-5 w-full max-w-sm px-4 py-8"
               style={{ background: "rgba(12,15,26,0.98)", border: `3px solid ${ORANGE}`, boxShadow: `6px 6px 0px ${ORANGE}44` }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: ORANGE }}>[ 任務完成 ]</p>
-              <button onClick={() => { window.location.href = "/"; }}
+              <button onClick={() => { router.push("/"); }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${ORANGE}20`, border: `2px solid ${ORANGE}`, color: BRIGHT }}>
                 返回地圖
