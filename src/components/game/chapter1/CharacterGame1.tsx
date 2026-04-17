@@ -400,7 +400,7 @@ export default function CharacterGame() {
 
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden"
-        style={{ backgroundImage: "url(/img/BK1.png)", backgroundSize: "cover", backgroundPosition: "center", cursor: "default" }}>
+        style={{ backgroundImage: `url(${img("/img/BK1.png")})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "default" }}>
 
         {/* Classifier */}
         <div className="absolute"

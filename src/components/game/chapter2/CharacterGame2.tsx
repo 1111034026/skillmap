@@ -259,7 +259,7 @@ export default function CharacterGame2() {
 
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden" style={{
-        backgroundImage: "url('/img/BK2.png')",
+        backgroundImage: `url(${img("/img/BK2.png")})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         cursor: "default",

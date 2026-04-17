@@ -220,7 +220,7 @@ export default function CharacterGame4() {
 
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden"
-        style={{ backgroundImage: "url('/img/BK4.png')", backgroundSize: "cover", backgroundPosition: "center" }}>
+        style={{ backgroundImage: `url(${img("/img/BK4.png")})`, backgroundSize: "cover", backgroundPosition: "center" }}>
 
         {/* Food classification machine */}
         <div className="absolute"

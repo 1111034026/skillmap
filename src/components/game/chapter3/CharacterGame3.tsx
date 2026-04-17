@@ -249,7 +249,7 @@ export default function CharacterGame3() {
 
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden"
-        style={{ backgroundImage: "url('/img/BK3.png')", backgroundSize: "cover", backgroundPosition: "center", cursor: "default" }}>
+        style={{ backgroundImage: `url(${img("/img/BK3.png")})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "default" }}>
 
         {/* Background gears (decorative) */}
         <div style={{ position: "absolute", top: 40, left: 40, fontSize: 180, opacity: 0.04,
