@@ -1,4 +1,5 @@
 "use client";
+import { img } from "@/lib/imgPath";
 
 interface Props {
   message: string;

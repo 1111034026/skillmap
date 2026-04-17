@@ -1,4 +1,5 @@
 "use client";
+import { img } from "@/lib/imgPath";
 
 const GREEN = "#22c55e";
 

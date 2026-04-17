@@ -1,4 +1,5 @@
 "use client";
+import { img } from "@/lib/imgPath";
 
 const ORANGE = "#00AAFF";
 const RED = "#FF3333";
