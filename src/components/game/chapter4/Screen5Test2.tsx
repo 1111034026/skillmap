@@ -1,29 +1,55 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { TEST_ITEMS } from "@/data/chapter4";
 import { MiaPortrait } from "./MiaPortrait";
+import { img } from "@/lib/imgPath";
 
 const GREEN  = "#22c55e";
 const BG     = "#041208";
 
 const INTRO_LINES = [
-  "好了，現在我們再讓它試一次。",
+  "現在我們再讓它試一次。",
   "看看多學了香蕉之後，它有沒有變得更會分。",
 ];
 
 type Phase = "intro" | "reveal" | "feedback";
 
 export default function Screen5Test2({ onDone }: { onDone: () => void }) {
-  const [phase,      setPhase]      = useState<Phase>("intro");
-  const [introIdx,   setIntroIdx]   = useState(0);
-  const [itemIdx,    setItemIdx]    = useState(0);
-  const [scanning,   setScanning]   = useState(false);
-  const [showResult, setShowResult] = useState(false);
+  const [phase,       setPhase]       = useState<Phase>("intro");
+  const [introIdx,    setIntroIdx]    = useState(0);
+  const [itemIdx,     setItemIdx]     = useState(0);
+  const [feedbackIdx, setFeedbackIdx] = useState(0);
+  const [scanning,    setScanning]    = useState(false);
+  const [showResult,  setShowResult]  = useState(false);
 
   const item   = TEST_ITEMS[itemIdx];
   const isLast = itemIdx === TEST_ITEMS.length - 1;
+
+  const audioRef      = useRef<HTMLAudioElement | null>(null);
+  const thinkAudioRef = useRef<HTMLAudioElement | null>(null);
+  const playVoice = useCallback((text: string) => {
+    if (audioRef.current) audioRef.current.pause();
+    const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-4gamevoice/${encodeURIComponent(text)}.mp3`);
+    audioRef.current = a;
+    a.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!scanning) return;
+    const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/thinking.mp3`);
+    a.loop = true;
+    thinkAudioRef.current = a;
+    a.play().catch(() => {});
+    return () => { a.pause(); thinkAudioRef.current = null; };
+  }, [scanning]);
+
+  useEffect(() => {
+    if (!showResult) return;
+    if (thinkAudioRef.current) { thinkAudioRef.current.pause(); thinkAudioRef.current = null; }
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/correct.mp3`).play().catch(() => {});
+  }, [showResult]);
 
   useEffect(() => {
     if (phase !== "reveal" || !scanning) return;
@@ -41,7 +67,7 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
   const startScan = () => { setScanning(true); };
 
   const { ready } = useDialogReady(
-    `${phase}-${introIdx}-${itemIdx}`,
+    `${phase}-${introIdx}-${itemIdx}-${feedbackIdx}`,
     phase === "intro" || phase === "feedback",
   );
 
@@ -52,10 +78,19 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
       setPhase("reveal"); setScanning(false); setShowResult(false); return;
     }
     if (phase === "feedback") {
-      if (!isLast) { setItemIdx(prev => prev + 1); setPhase("reveal"); setScanning(false); setShowResult(false); return; }
+      if (feedbackIdx < item.mia2.length - 1) { setFeedbackIdx(feedbackIdx + 1); return; }
+      if (!isLast) { setItemIdx(prev => prev + 1); setFeedbackIdx(0); setPhase("reveal"); setScanning(false); setShowResult(false); return; }
       onDone();
     }
   };
+
+  useEffect(() => {
+    if (phase === "intro") playVoice(INTRO_LINES[introIdx]);
+  }, [phase, introIdx, playVoice]);
+
+  useEffect(() => {
+    if (phase === "feedback") playVoice(item.mia2[feedbackIdx]);
+  }, [phase, itemIdx, feedbackIdx, playVoice]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "e" || e.key === "E") advance(); };
@@ -87,7 +122,12 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8">
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8" style={{ position: "relative" }}>
+        {phase === "intro" && (
+          <img src={img("/img/Classification robot.png")} alt="" draggable={false}
+            style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
+                     width: 280, height: "auto", imageRendering: "pixelated", pointerEvents: "none" }} />
+        )}
         {phase !== "intro" && (
           <>
             <p className="text-sm tracking-wide" style={{ color: `${GREEN}88` }}>
@@ -170,7 +210,7 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
               <p key={`${phase}-${introIdx}-${itemIdx}`}
                 className="text-white text-lg leading-relaxed dialog-text whitespace-pre-line"
                 style={{ animation: "fadeUp 0.2s ease" }}>
-                {phase === "intro" ? INTRO_LINES[introIdx] : item.mia2}
+                {phase === "intro" ? INTRO_LINES[introIdx] : item.mia2[feedbackIdx]}
               </p>
               <span className="text-xs absolute bottom-3 right-4"
                 style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>

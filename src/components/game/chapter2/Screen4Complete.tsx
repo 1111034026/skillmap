@@ -1,5 +1,6 @@
 "use client";
 import { navigate } from "@/lib/navigate";
+import { useEffect, useRef } from "react";
 
 import { C2Element, C2Theme, StageResult } from "@/data/chapter2";
 
@@ -19,6 +20,12 @@ const PREVIEW_H = 320;
 
 export default function Screen4Complete({ theme, background, character, prop, stageResult }: Props) {
   const { items: stageItems, stageW, stageH } = stageResult;
+
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/finish.mp3`).play().catch(() => {});
+  }, []);
   const scaleX = PREVIEW_W / stageW;
   const scaleY = PREVIEW_H / stageH;
   const scale  = Math.min(scaleX, scaleY);
@@ -105,6 +112,12 @@ export default function Screen4Complete({ theme, background, character, prop, st
       </div>
 
       <button
+        onPointerDown={() => {
+          const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+          a.playbackRate = 1.5;
+          enterAudioRef.current = a;
+          a.play().catch(() => {});
+        }}
         onClick={() => {
           localStorage.setItem("chapter2_complete", "1");
           localStorage.setItem("chapter2_artwork", JSON.stringify({
@@ -116,7 +129,9 @@ export default function Screen4Complete({ theme, background, character, prop, st
             stageH: stageResult.stageH,
             backgroundId: background.id,
           }));
-          navigate("/level/chapter-2");
+          const a = enterAudioRef.current;
+          if (a && !a.ended) { a.onended = () => navigate("/level/chapter-2"); }
+          else { navigate("/level/chapter-2"); }
         }}
         className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
         style={{ background: `${GREEN}20`, border: `2px solid ${GREEN}`, boxShadow: `4px 4px 0px ${GREEN}44`, color: BRIGHT }}>

@@ -44,7 +44,7 @@ const MACHINE_INTRO = [
 const ROUND_INTRO: Record<ElementType, string[]> = {
   background: ["先來選背景。背景會決定整個舞台的感覺。", "看一看，這個背景和你的主題搭不搭。"],
   character:  ["背景選好了，接下來選角色。", "角色會讓舞台更有故事感。想想看，誰最適合出現在你的舞台上。"],
-  prop:       ["最後來選道具。", "小道具看起來好像不大，可是常常會讓作品更完整。"],
+  prop:       ["最後來選道具。", "加上道具能讓你的作品更完整。"],
 };
 
 const MACHINE_GIVE: Record<ElementType, string[]> = {
@@ -55,8 +55,8 @@ const MACHINE_GIVE: Record<ElementType, string[]> = {
 
 const LUMI_KEEP: Record<ElementType, string[]> = {
   background: ["這個很適合你的主題。", "很好，你知道自己想要什麼感覺。"],
-  character:  ["這個角色很有感覺。", "很好，這個角色和你的主題很搭。"],
-  prop:       ["很好，這個可以讓舞台更完整。", "你挑得很仔細，這樣作品會更有感覺。"],
+  character:  ["很好，這個角色和你的主題很搭。"],
+  prop:       ["很好，這個可以讓舞台更完整。"],
 };
 
 const MACHINE_KEEP: Record<ElementType, string> = {
@@ -78,9 +78,9 @@ const MACHINE_SWAP: Record<ElementType, string[]> = {
 };
 
 const COMPLETE_LINES = [
-  "很好，你已經挑好要用的材料了。",
+  "你已經挑好要用的點子了。",
   "剛剛不是 AI 設計機自己決定要留什麼，是你自己選出來的。",
-  "接下來，我們把這些材料拼成真正的作品吧。",
+  "接下來，我們把這些點子拼成真正的作品吧。",
 ];
 
 function getPool(theme: C2Theme, type: ElementType): C2Element[] {
@@ -109,6 +109,24 @@ export default function Screen2Elements({ theme, elementType, showTaskIntro, isL
 
   const [phase,    setPhase]   = useState<Phase>(showTaskIntro ? "task-intro" : "round-intro");
   const [idx,      setIdx]     = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const lumiLines: Record<string, string[] | undefined> = {
+      "task-intro":  TASK_INTRO,
+      "round-intro": ROUND_INTRO[elementType],
+      "lumi-keep":   LUMI_KEEP[elementType],
+      "lumi-swap":   LUMI_SWAP[elementType],
+      "complete":    COMPLETE_LINES,
+    };
+    const line = lumiLines[phase]?.[idx];
+    if (!line) return;
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-2gamevoice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); };
+  }, [phase, idx, elementType]);
   const [current,  setCurrent] = useState<C2Element | null>(null);
   const [usedIds,  setUsedIds] = useState<Set<string>>(new Set());
   const [kept,     setKept]    = useState<C2Element | null>(null);
@@ -257,12 +275,16 @@ export default function Screen2Elements({ theme, elementType, showTaskIntro, isL
               <span className="text-xl font-bold" style={{ color: "#d1fae5" }}>{current.name}</span>
             </div>
             <div className="flex gap-4">
-              <button onClick={handleKeep}
+              <button
+                onPointerDown={() => new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/select.mp3`).play().catch(() => {})}
+                onClick={handleKeep}
                 className="px-8 py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${GREEN}22`, border: `2px solid ${GREEN}`, color: BRIGHT, boxShadow: `3px 3px 0px ${GREEN}44` }}>
                 ✓ 留下
               </button>
-              <button onClick={handleSwap}
+              <button
+                onPointerDown={() => new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/select.mp3`).play().catch(() => {})}
+                onClick={handleSwap}
                 className="px-8 py-3 font-bold text-sm tracking-widest"
                 style={{ background: "rgba(255,170,0,0.1)", border: "2px solid #FFB800", color: "#FFB800", boxShadow: "3px 3px 0px #FFB80044" }}>
                 ↻ 換掉
@@ -391,8 +413,14 @@ function MachineOverlay({ lines, onDone }: { lines: string[]; onDone: () => void
   const calledRef  = useRef(false);
   const onDoneRef  = useRef(onDone);
   onDoneRef.current = onDone;
+  const thinkAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/thinking.mp3`);
+    audio.loop = true;
+    thinkAudioRef.current = audio;
+    audio.play().catch(() => {});
+
     const t: ReturnType<typeof setTimeout>[] = [];
     allLines.forEach((_, i) =>
       t.push(setTimeout(() => setVisible(i + 1), 500 + i * LINE_MS))
@@ -401,9 +429,17 @@ function MachineOverlay({ lines, onDone }: { lines: string[]; onDone: () => void
     for (let i = 1; i <= STEPS; i++)
       t.push(setTimeout(() => setProgress(Math.round((i / STEPS) * 100)), (TOTAL_MS / STEPS) * i));
     t.push(setTimeout(() => {
-      if (!calledRef.current) { calledRef.current = true; onDoneRef.current(); }
+      if (!calledRef.current) {
+        calledRef.current = true;
+        if (thinkAudioRef.current) { thinkAudioRef.current.pause(); thinkAudioRef.current = null; }
+        new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/idea.mp3`).play().catch(() => {});
+        onDoneRef.current();
+      }
     }, TOTAL_MS));
-    return () => t.forEach(clearTimeout);
+    return () => {
+      t.forEach(clearTimeout);
+      audio.pause();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

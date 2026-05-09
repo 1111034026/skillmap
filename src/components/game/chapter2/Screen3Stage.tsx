@@ -10,7 +10,6 @@ const BRIGHT = "#4ade80";
 
 const INTRO_LINES = [
   "現在輪到你來做最後的決定了。",
-  "剛剛是挑材料，現在是把它們組成作品。",
   "AI 設計機幫你想了點子，可是舞台最後長什麼樣，還是要靠你自己選位置、自己組起來。",
 ];
 
@@ -43,6 +42,23 @@ export default function Screen3Stage({ theme, background, character, prop, onDon
   const [introDone,   setIntroDone]   = useState(false);
   const [donePhase,   setDonePhase]   = useState<"hidden" | "lumi">("hidden");
   const [doneLumiIdx, setDoneLumiIdx] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (introDone) return;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-2gamevoice/${encodeURIComponent(INTRO_LINES[introIdx])}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); };
+  }, [introIdx, introDone]);
+
+  useEffect(() => {
+    if (donePhase !== "lumi") return;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-2gamevoice/${encodeURIComponent(COMPLETE_LUMI[doneLumiIdx])}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); };
+  }, [doneLumiIdx, donePhase]);
 
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -165,6 +181,7 @@ export default function Screen3Stage({ theme, background, character, prop, onDon
     const y = Math.max(0, e.clientY - rect.top  - offset.y);
 
     if (from === "hand") {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/put in.mp3`).play().catch(() => {});
       setHand((prev) => prev.filter((h) => h.id !== el.id));
       setPlaced((prev) => [...prev, { id: `${el.id}-${Date.now()}`, el, x, y, size: 220, rotate: 0 }]);
     } else if (from === "stage" && sid) {
@@ -236,7 +253,7 @@ export default function Screen3Stage({ theme, background, character, prop, onDon
             {hand.map((el) => (
               <div key={el.id}
                 draggable
-                onDragStart={(e) => onHandDragStart(e, el)}
+                onDragStart={(e) => { new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/drag.mp3`).play().catch(() => {}); onHandDragStart(e, el); }}
                 className="flex items-center gap-3 px-4 py-3 cursor-grab active:cursor-grabbing select-none"
                 style={{
                   background: `${theme.color}18`,
@@ -314,7 +331,7 @@ export default function Screen3Stage({ theme, background, character, prop, onDon
                   {/* Image + corner handles (all rotate together) */}
                   <div style={{ transform: `rotate(${item.rotate}deg)`, transformOrigin: "center center",
                                 position: "relative", display: "inline-block" }}>
-                    <div draggable onDragStart={(e) => onStageDragStart(e, item)} style={{ cursor: "grab" }}>
+                    <div draggable onDragStart={(e) => { new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/drag.mp3`).play().catch(() => {}); onStageDragStart(e, item); }} style={{ cursor: "grab" }}>
                       {item.el.img
                         ? <img src={item.el.img} alt={item.el.name}
                             style={{ width: item.size, height: item.size, objectFit: "contain", imageRendering: "pixelated", display: "block" }} />

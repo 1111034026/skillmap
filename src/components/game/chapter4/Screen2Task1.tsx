@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { APPLE_CARDS, BANANA_CARDS, FoodCard } from "@/data/chapter4";
 import { MiaPortrait } from "./MiaPortrait";
@@ -14,7 +14,7 @@ const ALL_FRUITS = [...APPLE_CARDS, ...BANANA_CARDS];
 
 const MIA_PLACING = ["很好，它正在記住蘋果的樣子。", "再放一張，讓它看得更清楚。"];
 const MIA_DONE    = "好了，它現在先學會蘋果了。";
-const MIA_WRONG   = "這是香蕉，不是蘋果。現在要先讓機器學習蘋果，請放入蘋果卡。";
+const MIA_WRONG   = "這是香蕉，不是蘋果。現在要先讓機器學習蘋果，請放入蘋果圖片。";
 
 interface Props { onDone: () => void; }
 
@@ -25,15 +25,24 @@ export default function Screen2Task1({ onDone }: Props) {
   const [isDone,   setIsDone]   = useState(false);
   const [hovering, setHovering] = useState(false);
   const dragging = useRef<FoodCard | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playVoice = useCallback((text: string) => {
+    if (audioRef.current) audioRef.current.pause();
+    const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-4gamevoice/${encodeURIComponent(text)}.mp3`);
+    audioRef.current = a;
+    a.play().catch(() => {});
+  }, []);
 
   const handleDrop = () => {
     const food = dragging.current;
     dragging.current = null;
     if (!food || isDone) return;
     if (food.type !== "apple") {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/error.mp3`).play().catch(() => {});
       setMsg(MIA_WRONG);
       return;
     }
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/put in.mp3`).play().catch(() => {});
     if (placed.some(p => p.id === food.id)) return;
     const next = [...placed, food];
     setPlaced(next);
@@ -55,7 +64,12 @@ export default function Screen2Task1({ onDone }: Props) {
 
   useEffect(() => {
     setFruits(f => [...f].sort(() => Math.random() - 0.5));
+    playVoice("把蘋果的圖片放進機器，讓機器學習蘋果的樣子");
   }, []);
+
+  useEffect(() => {
+    if (msg !== null) playVoice(msg);
+  }, [msg, playVoice]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "e" || e.key === "E") advance(); };
@@ -78,7 +92,7 @@ export default function Screen2Task1({ onDone }: Props) {
 
       <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8">
         <p className="text-sm tracking-wide text-center" style={{ color: `${GREEN}88` }}>
-          把蘋果卡放進機器，讓機器學習蘋果的樣子
+          把蘋果的圖片放進機器，讓機器學習蘋果的樣子
         </p>
 
         <div style={{ padding: "8px 24px", border: `1px solid ${GREEN}44`,
@@ -93,7 +107,7 @@ export default function Screen2Task1({ onDone }: Props) {
             const isPlaced = placed.some(p => p.id === food.id);
             return (
               <div key={food.id} draggable={!isPlaced && !isDone}
-                onDragStart={() => { if (!isPlaced && !isDone) dragging.current = food; }}
+                onDragStart={() => { if (!isPlaced && !isDone) { dragging.current = food; new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/drag.mp3`).play().catch(() => {}); } }}
                 onDragEnd={() => { dragging.current = null; }}
                 style={{
                   cursor: isPlaced ? "default" : isDone ? "default" : "grab",
@@ -127,11 +141,6 @@ export default function Screen2Task1({ onDone }: Props) {
             <img src={img("/img/Classification robot.png")} alt="食物分類機" draggable={false}
               style={{ width: 280, height: "auto", imageRendering: "pixelated", display: "block" }} />
           </div>
-          {placed.length > 0 && (
-            <div className="flex gap-3 flex-wrap justify-center">
-              {placed.map(f => <img key={f.id} src={f.img} alt={f.name} style={{ width: 40, height: 40, objectFit: "contain", imageRendering: "pixelated" }} />)}
-            </div>
-          )}
         </div>
       </div>
 

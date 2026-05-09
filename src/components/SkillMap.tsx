@@ -8,6 +8,7 @@ import SkillPath from "@/components/SkillPath";
 import InfoPanel from "@/components/InfoPanel";
 import { Skill } from "@/types";
 import { ALL_GAME_KEYS } from "@/data/storageKeys";
+import { img } from "@/lib/imgPath";
 
 export default function SkillMap() {
   const { getSkillState, markCompleted, resetProgress, completedCount, totalCount } =
@@ -82,13 +83,10 @@ export default function SkillMap() {
       {/* ── 中間內容區：flex-1 min-h-0，永遠填滿 header 和 footer 之間的空間 ── */}
       <div className="flex-1 min-h-0 flex flex-col">
 
-        {/* 地圖區：aspect-ratio 讓高度由寬度決定，寬度直接驅動 scale */}
-        <div className="flex-shrink-0" style={{ padding: "1.5vh 0" }}>
-          {/* aspect-ratio 確保比例固定，maxHeight 防止過高 */}
+        {/* 地圖區：佔上半部 50vh */}
+        <div className="flex-shrink-0" style={{ height: "50vh" }}>
           <div ref={mapWrapRef} style={{
-            position: "relative", width: "100%", overflow: "hidden",
-            aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
-            maxHeight: "40vh",
+            position: "relative", width: "100%", height: "100%", overflow: "hidden",
           }}>
             {/* 固定邏輯尺寸的地圖內容，用 transform scale 等比縮放 */}
             <div style={{
@@ -96,16 +94,10 @@ export default function SkillMap() {
               width: CANVAS_WIDTH, height: CANVAS_HEIGHT,
               transform: `translateX(-50%) scale(${scale})`, transformOrigin: "top center",
             }}>
-              <div className="absolute inset-0" style={{
-                background: "#0c0a08", border: "2px solid #e85500",
-                boxShadow: "0 0 24px #e8550033, inset 0 0 40px #0a0400",
-              }} />
-              <div className="absolute inset-0 opacity-20" style={{
-                backgroundImage:
-                  "linear-gradient(#e8550022 1px, transparent 1px), linear-gradient(90deg, #e8550022 1px, transparent 1px)",
-                backgroundSize: "36px 36px",
-              }} />
-              <SkillPath getSkillState={getSkillState} />
+              <img src={img("/img/mapBK.png")} alt="" draggable={false}
+                className="absolute inset-0 w-full h-full"
+                style={{ objectFit: "cover", imageRendering: "pixelated", pointerEvents: "none" }} />
+              <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)", pointerEvents: "none" }} />
               {skills.map(skill => (
                 <SkillNode
                   key={skill.id}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Question } from "@/data/chapter1";
 import DragCard from "./DragCard";
 import DropZone from "./DropZone";
@@ -12,13 +12,27 @@ interface Props {
   question: Question;
   questionIndex: number;
   total: number;
+  skipVoice?: boolean;
   onCorrect: () => void;
   onWrong: (wrongHints: string[]) => void;
 }
 
 const ORANGE = "#00AAFF";
 
-export default function Screen3Game({ question, questionIndex, total, onCorrect, onWrong }: Props) {
+export default function Screen3Game({ question, questionIndex, total, skipVoice, onCorrect, onWrong }: Props) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [voiceDone, setVoiceDone] = useState(!!skipVoice);
+  useEffect(() => {
+    if (skipVoice) return;
+    let cancelled = false;
+    const done = () => { if (!cancelled) setVoiceDone(true); };
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent(question.situation)}.mp3`);
+    audioRef.current = audio;
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  }, []);
+
   const [placements, setPlacements] = useState<Record<string, Zone>>(
     Object.fromEntries(question.cards.map((c) => [c.id, "hand"]))
   );
@@ -45,8 +59,10 @@ export default function Screen3Game({ question, questionIndex, total, onCorrect,
       (c) => placements[c.id] !== "hand" && placements[c.id] !== c.zone
     );
     if (wrong.length === 0) {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/correct.mp3`).play().catch(() => {});
       onCorrect();
     } else {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/error.mp3`).play().catch(() => {});
       setWrongCards(new Set(wrong.map((c) => c.id)));
       onWrong(wrong.map((c) => c.wrongHint).filter(Boolean));
     }
@@ -109,6 +125,7 @@ export default function Screen3Game({ question, questionIndex, total, onCorrect,
           </div>
         </div>
 
+        {voiceDone && <>
         {/* Drop zones — 3 columns */}
         <div className="w-full max-w-2xl grid grid-cols-3 gap-3">
           <DropZone label="可以接受" termLabel="[ 接受 ]" color="#00FF88" cards={usable}
@@ -161,6 +178,7 @@ export default function Screen3Game({ question, questionIndex, total, onCorrect,
             {allPlaced ? "▶ 確認答案" : "— 請先將所有卡片分類 —"}
           </button>
         </div>
+        </>}
 
       </div>
     </div>

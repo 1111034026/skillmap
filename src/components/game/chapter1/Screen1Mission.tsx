@@ -33,7 +33,7 @@ export default function Screen1Mission({ onStart }: Props) {
           {/* ! indicator */}
           <div
             className="absolute -top-8 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center font-black text-lg animate-bounce"
-            style={{ background: "#f59e0b", color: "#fff", border: "3px solid #92400e", boxShadow: "2px 2px 0px #000" }}
+            style={{ background: "#ef4444", color: "#fff", border: "3px solid #b91c1c", boxShadow: "2px 2px 0px #000" }}
           >
             !
           </div>

@@ -25,7 +25,7 @@ interface ArtworkData {
 const SPEED = 4;
 const CHAR_SIZE_PCT = 210 / 810;
 const NPC_SIZE_PCT  = 330 / 810;
-const INTERACT_DIST_PCT = 240 / 810;
+const INTERACT_DIST_PCT = 420 / 810;
 const WALK_BOUNDS = { minX: 0, minY: 300 / 810, maxY: 580 / 810 };
 const DM_POS = { x: 250 / 1440, y: 300 / 810, width: 260 / 1440 }; // design machine
 
@@ -44,7 +44,7 @@ const LUMI = {
   dialogAfter: [
     "你完成了屬於自己的舞台佈景！",
     "AI 給了你很多點子，但是最後的作品是你自己選出來的。",
-    "記住：AI 可以幫你想，但創作的決定在你手上。",
+    "記住：AI 可以幫你想點子，但最後要怎麼創作，還是由你決定。",
   ],
 };
 
@@ -77,14 +77,29 @@ export default function CharacterGame2() {
   const [nearLumi,     setNearLumi]     = useState(false);
   const [nearDM,       setNearDM]       = useState(false);
   const [finalOverlay, setFinalOverlay] = useState(false);
+
+  useEffect(() => {
+    if (!finalOverlay) return;
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/Clear .mp3`).play().catch(() => {});
+  }, [finalOverlay]);
+
   const nearLumiRef = useRef(false);
   const nearDMRef   = useRef(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const keysRef      = useRef<Set<string>>(new Set());
   const rafRef       = useRef<number>(0);
+  const audioRef     = useRef<HTMLAudioElement | null>(null);
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
+
+  const playVoice = useCallback((line: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-2voice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+  }, []);
 
   const currentLines = ch2CompleteRef.current && !lumiAfterDoneRef.current
     ? LUMI.dialogAfter
@@ -101,7 +116,9 @@ export default function CharacterGame2() {
     if (next < lines.length) {
       dialogIndexRef.current = next;
       setDialogIndex(next);
+      playVoice(lines[next]);
     } else {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = false;
       dialogIndexRef.current = 0;
       setActiveDialog(false);
@@ -117,7 +134,7 @@ export default function CharacterGame2() {
         localStorage.setItem("lumi_dialog_done", "1");
       }
     }
-  }, []);
+  }, [playVoice]);
 
   const openLumiDialog = useCallback(() => {
     const canTalk = !lumiDialogDoneRef.current ||
@@ -127,7 +144,10 @@ export default function CharacterGame2() {
     dialogIndexRef.current = 0;
     setActiveDialog(true);
     setDialogIndex(0);
-  }, []);
+    const lines = ch2CompleteRef.current && !lumiAfterDoneRef.current
+      ? LUMI.dialogAfter : LUMI.dialog;
+    playVoice(lines[0]);
+  }, [playVoice]);
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
@@ -226,6 +246,7 @@ export default function CharacterGame2() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       cancelAnimationFrame(rafRef.current);
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     };
   }, [gameLoop, advanceDialog, openLumiDialog]);
 
@@ -281,7 +302,7 @@ export default function CharacterGame2() {
             style={{ width: DM_POS.width * cw, height: "auto", imageRendering: "pixelated", display: "block" }} />
           {lumiDialogDone && !ch2Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: GREEN, textShadow: `0 0 12px ${GREEN}`, pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearDM && lumiDialogDone && !ch2Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -302,7 +323,7 @@ export default function CharacterGame2() {
                      filter: nearLumi ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!lumiDialogDone || (ch2Complete && !lumiAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: GREEN, textShadow: `0 0 12px ${GREEN}`, pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearLumi && !activeDialog && (!lumiDialogDone || (ch2Complete && !lumiAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -324,7 +345,9 @@ export default function CharacterGame2() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(5,32,16,0.98)", border: `3px solid ${GREEN}`, boxShadow: `4px 4px 0px ${GREEN}44` }}>
-              <button onClick={() => { navigate("/level/chapter-2/game"); }}
+              <button
+                onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); }}
+                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-2/game"); } else { navigate("/level/chapter-2/game"); } }}
                 className="w-full py-3 font-bold text-sm"
                 style={{ background: `${GREEN}22`, border: `3px solid ${GREEN}`, color: BRIGHT, boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
@@ -345,7 +368,18 @@ export default function CharacterGame2() {
             <div className="flex flex-col items-center gap-5 w-full max-w-sm px-4 py-8"
               style={{ background: "rgba(5,32,16,0.98)", border: `3px solid ${GREEN}`, boxShadow: `6px 6px 0px ${GREEN}44` }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: GREEN }}>[ 任務完成 ]</p>
-              <button onClick={() => { navigate("/"); }}
+              <button
+                onPointerDown={() => {
+                  const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+                  a.playbackRate = 1.5;
+                  enterAudioRef.current = a;
+                  a.play().catch(() => {});
+                }}
+                onClick={() => {
+                  const a = enterAudioRef.current;
+                  if (a && !a.ended) { a.onended = () => navigate("/"); }
+                  else { navigate("/"); }
+                }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${GREEN}20`, border: `2px solid ${GREEN}`, color: BRIGHT }}>
                 返回地圖

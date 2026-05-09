@@ -41,10 +41,7 @@ export function useProgress() {
     (skillId: string): SkillState => {
       if (!loaded) return "locked";
       if (completed.has(skillId)) return "completed";
-      const skill = skills.find((s) => s.id === skillId);
-      if (!skill) return "locked";
-      const allPrereqsDone = skill.prerequisites.every((p) => completed.has(p));
-      return allPrereqsDone ? "available" : "locked";
+      return "available";
     },
     [completed, loaded]
   );

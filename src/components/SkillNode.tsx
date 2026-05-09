@@ -33,6 +33,7 @@ export default function SkillNode({ skill, state, isSelected, onClick }: Props) 
       }}
     >
       <button
+        onPointerDown={isLocked ? undefined : () => { new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/select.mp3`).play().catch(() => {}); }}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
         className="relative flex flex-col items-center justify-center gap-1 transition-all duration-150 select-none font-mono"

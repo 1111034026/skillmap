@@ -16,7 +16,7 @@ export default function DragCard({ card, isWrong, onDragStart, onClick }: Props)
   return (
     <div
       draggable
-      onDragStart={() => onDragStart(card.id)}
+      onDragStart={() => { new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/drag.mp3`).play().catch(() => {}); onDragStart(card.id); }}
       onClick={onClick}
       className="flex flex-col items-center gap-1.5 px-5 py-4 cursor-grab active:cursor-grabbing select-none"
       style={{

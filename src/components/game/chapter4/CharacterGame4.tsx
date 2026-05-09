@@ -17,13 +17,14 @@ const NPC_SIZE_PCT  = 300 / 810;
 const CHAR_SIZE_PCT = 210 / 810;
 const WALK_BOUNDS   = { minX: 0, minY: 320 / 810, maxY: 510 / 810 };
 const SPEED         = 4;
-const INTERACT_DIST = 280 / 810;
+const INTERACT_DIST = 420 / 810;
 
 const MIA_DIALOG: string[] = [
-  "歡迎來到智能動物園。",
-  "這裡有一台新的食物分類機器人。我們本來想請它幫忙分析食物，這樣就可以更快把食物送給不同動物。",
-  "可是現在它還認不得蘋果和香蕉，常常把食物析成同一種。",
-  "請你幫我訓練它",
+  "歡迎來到智能動物園，我是管理員米亞。",
+  "動物園來了一台新的食物分類機器人。",
+  "我們想請它幫忙分析食物，這樣就可以更快把食物送給不同動物。",
+  "可是現在它還認不得蘋果和香蕉，常常把兩者搞混。",
+  "請你幫我一起來訓練它。",
 ];
 
 const MIA_DIALOG_AFTER: string[] = [
@@ -66,6 +67,20 @@ export default function CharacterGame4() {
   const nearMachineRef = useRef(false);
 
   const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
+  const audioRef      = useRef<HTMLAudioElement | null>(null);
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!finalOverlay) return;
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/Clear .mp3`).play().catch(() => {});
+  }, [finalOverlay]);
+
+  const playVoice = useCallback((line: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-4voice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+  }, []);
 
   const currentLines = ch4CompleteRef.current && !miaAfterDoneRef.current
     ? MIA_DIALOG_AFTER : MIA_DIALOG;
@@ -103,7 +118,9 @@ export default function CharacterGame4() {
     const next = dialogIndexRef.current + 1;
     if (next < lines.length) {
       dialogIndexRef.current = next; setDialogIndex(next);
+      playVoice(lines[next]);
     } else {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = false; dialogIndexRef.current = 0;
       setActiveDialog(false); setDialogIndex(0);
       if (!ch4CompleteRef.current) {
@@ -115,7 +132,7 @@ export default function CharacterGame4() {
         setFinalOverlay(true);
       }
     }
-  }, []);
+  }, [playVoice]);
 
   const openMiaDialog = useCallback(() => {
     const canTalk = !miaDialogDoneRef.current ||
@@ -123,7 +140,9 @@ export default function CharacterGame4() {
     if (!canTalk || activeDialogRef.current) return;
     activeDialogRef.current = true; dialogIndexRef.current = 0;
     setActiveDialog(true); setDialogIndex(0);
-  }, []);
+    const lines = ch4CompleteRef.current && !miaAfterDoneRef.current ? MIA_DIALOG_AFTER : MIA_DIALOG;
+    playVoice(lines[0]);
+  }, [playVoice]);
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
@@ -184,6 +203,7 @@ export default function CharacterGame4() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       cancelAnimationFrame(rafRef.current);
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     };
   }, [gameLoop, advanceDialog, openMiaDialog]);
 
@@ -234,7 +254,7 @@ export default function CharacterGame4() {
                      filter: nearMachine ? "brightness(1.2)" : "brightness(1)", transition: "filter 0.3s" }} />
           {miaDialogDone && !ch4Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: GREEN, textShadow: `0 0 12px ${GREEN}`, pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearMachine && miaDialogDone && !ch4Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -253,7 +273,7 @@ export default function CharacterGame4() {
                      filter: nearMia ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!miaDialogDone || (ch4Complete && !miaAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: GREEN, textShadow: `0 0 12px ${GREEN}`, pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearMia && !activeDialog && (!miaDialogDone || (ch4Complete && !miaAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -275,7 +295,18 @@ export default function CharacterGame4() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(4,18,8,0.98)", border: `3px solid ${GREEN}`, boxShadow: `4px 4px 0px ${GREEN}44` }}>
-              <button onClick={() => { navigate("/level/chapter-4/game"); }}
+              <button
+                onPointerDown={() => {
+                  const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+                  a.playbackRate = 1.5;
+                  enterAudioRef.current = a;
+                  a.play().catch(() => {});
+                }}
+                onClick={() => {
+                  const a = enterAudioRef.current;
+                  if (a && !a.ended) { a.onended = () => navigate("/level/chapter-4/game"); }
+                  else { navigate("/level/chapter-4/game"); }
+                }}
                 className="w-full py-3 font-bold text-sm"
                 style={{ background: `${GREEN}22`, border: `3px solid ${GREEN}`, color: BRIGHT, boxShadow: "4px 4px 0px #000" }}>
                 開始訓練 →
@@ -296,7 +327,18 @@ export default function CharacterGame4() {
             <div className="flex flex-col items-center gap-5 w-full max-w-sm px-4 py-8"
               style={{ background: "rgba(5,32,16,0.98)", border: `3px solid ${GREEN}`, boxShadow: `6px 6px 0px ${GREEN}44` }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: GREEN }}>[ 任務完成 ]</p>
-              <button onClick={() => { navigate("/"); }}
+              <button
+                onPointerDown={() => {
+                  const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+                  a.playbackRate = 1.5;
+                  enterAudioRef.current = a;
+                  a.play().catch(() => {});
+                }}
+                onClick={() => {
+                  const a = enterAudioRef.current;
+                  if (a && !a.ended) { a.onended = () => navigate("/"); }
+                  else { navigate("/"); }
+                }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${GREEN}20`, border: `2px solid ${GREEN}`, color: BRIGHT }}>
                 返回地圖

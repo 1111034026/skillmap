@@ -11,7 +11,7 @@ type Direction = "front" | "back" | "left" | "right";
 const SPEED = 4;
 const CHAR_SIZE_PCT = 210 / 810;
 const NPC_SIZE_PCT  = 220 / 810;
-const INTERACT_DIST_PCT = 240 / 810;
+const INTERACT_DIST_PCT = 420 / 810;
 
 const WALK_BOUNDS = { minX: 0, minY: 300 / 810, maxY: 395 / 810 };
 
@@ -29,16 +29,16 @@ const FACTORY_POS = { right: 20 / 1440, top: 40 / 810,  width: 400 / 1440 };
 const NPC = {
   x: 420 / 1440, y: 300 / 810,
   dialog: [
-    "你來得正好！我是這座港口的船長，大家都叫我阿波。",
-    "最近港口的「AI 地點推薦板」不知道出了什麼問題，一直給出奇奇怪怪的建議……",
-    "上面貼的推薦地點有些根本不合理，害得大家都搞不清楚方向！！",
-    "AI 的建議不是每條都能採用，要先看清楚需求，比較過後，再決定哪些可以接受、哪些要再想想、哪些能直接略過。",
-    "可以幫我看看這些建議能不能用嗎？",
+    "你來得正好！我是這座港口的船長阿波。",
+    "最近港口的 AI 推薦板好像怪怪的，常常給出奇怪的建議。",
+    "有些建議看起來不太對，讓大家不知道該往哪裡走。",
+    "AI 說的話，不是每次都可以直接相信。我們要先看一看、想一想，再決定能不能用。",
+    "你可以幫我看看，這些建議能不能用嗎？",
   ],
   dialogAfter: [
-    "你做得很好。現在你已經會看 AI 給出的結果，哪些可以先接受，哪些還要再判斷，哪些要先拒絕。",
-    "可是我還有一個問題。公告板為什麼會分出這些怪怪的結果呢？",
-    "請你去找阿修。他或許能搞清楚狀況。",
+    "你做得很好。你已經會看 AI 給的結果，知道哪些可以先用，哪些要再想一想，哪些先不要用。",
+    "可是，公告板為什麼會分出這些怪怪的結果呢？",
+    "請你去找阿修，他可能知道發生了什麼事。",
   ],
 };
 
@@ -58,7 +58,7 @@ const MW_DIALOG_AFTER = [
 const MW_DIALOG = [
   "我是維修員阿修。",
   "你剛剛看到的是 AI 推薦板給出的結果。",
-  "其實在它後面，還有一台 AI 地點分類機。",
+  "其實在推薦板後面，還有一台 AI 分類機。",
   "它會先看地點的樣子和資料，把地點分成不同類別，再決定要顯示什麼結果。",
   "如果前面分錯了，後面就很容易一起錯。",
   "你來幫我看看，它到底學了什麼。",
@@ -118,8 +118,17 @@ export default function CharacterGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const keysRef      = useRef<Set<string>>(new Set());
   const rafRef       = useRef<number>(0);
+  const audioRef     = useRef<HTMLAudioElement | null>(null);
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
+
+  const playVoice = useCallback((line: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1voice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+  }, []);
 
   // ── Dialog ready lock (1.5s after each new line) ─────────────────────────
   const { ready, readyRef } = useDialogReady(
@@ -143,8 +152,10 @@ export default function CharacterGame() {
     if (next < lines.length) {
       dialogIndexRef.current = next;
       setDialogIndex(next);
+      playVoice(lines[next]);
     } else {
       // close dialog
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = null;
       dialogIndexRef.current = 0;
       setActiveDialog(null);
@@ -154,6 +165,7 @@ export default function CharacterGame() {
           finalDoneRef.current = true;
           setFinalDone(true);
           localStorage.setItem("final_done", "1");
+          new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/Clear .mp3`).play().catch(() => {});
         } else if (missionCompleteRef.current) {
           npcDialogDoneRef.current = true; setNpcDialogDone(true);
           npcAfterDoneRef.current = true;
@@ -173,7 +185,7 @@ export default function CharacterGame() {
         localStorage.setItem("mw_dialog_done", "1");
       }
     }
-  }, []);
+  }, [playVoice]);
 
   // ── Open dialog helpers ───────────────────────────────────────────────────
 
@@ -186,7 +198,11 @@ export default function CharacterGame() {
     dialogIndexRef.current = 0;
     setActiveDialog("npc");
     setDialogIndex(0);
-  }, []);
+    const lines = clsAfterDoneRef.current && !finalDoneRef.current ? NPC_FINAL_DIALOG
+      : missionCompleteRef.current ? NPC.dialogAfter
+      : NPC.dialog;
+    playVoice(lines[0]);
+  }, [playVoice]);
 
   const openMwDialog = useCallback(() => {
     if (!npcAfterDoneRef.current || mwDialogDoneRef.current) return;
@@ -195,7 +211,8 @@ export default function CharacterGame() {
     dialogIndexRef.current = 0;
     setActiveDialog("mw");
     setDialogIndex(0);
-  }, []);
+    playVoice(MW_DIALOG[0]);
+  }, [playVoice]);
 
   const openMwAfterDialog = useCallback(() => {
     if (!clsTaskDoneRef.current || clsAfterDoneRef.current) return;
@@ -204,7 +221,8 @@ export default function CharacterGame() {
     dialogIndexRef.current = 0;
     setActiveDialog("mw_after");
     setDialogIndex(0);
-  }, []);
+    playVoice(MW_DIALOG_AFTER[0]);
+  }, [playVoice]);
 
   // ── Game loop ─────────────────────────────────────────────────────────────
 
@@ -352,6 +370,7 @@ export default function CharacterGame() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       cancelAnimationFrame(rafRef.current);
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     };
   }, [gameLoop, advanceDialog, openNpcDialog, openMwDialog, openMwAfterDialog]);
 
@@ -414,7 +433,7 @@ export default function CharacterGame() {
                      filter: nearClassifier && mwDialogDone && !clsTaskDone ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {mwDialogDone && !clsTaskDone && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: "#1d4ed8", textShadow: "0 0 12px #1d4ed8, 0 0 24px #1e3a8a", pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearClassifier && mwDialogDone && !clsTaskDone && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -450,7 +469,7 @@ export default function CharacterGame() {
                      filter: nearMW && ((npcAfterDone && !mwDialogDone) || (clsTaskDone && !clsAfterDone)) ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {((npcAfterDone && !mwDialogDone) || (clsTaskDone && !clsAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: "#1d4ed8", textShadow: "0 0 12px #1d4ed8, 0 0 24px #1e3a8a", pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearMW && (npcAfterDone && !mwDialogDone) && activeDialog !== "mw" && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -475,7 +494,7 @@ export default function CharacterGame() {
                      filter: nearBoard ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {npcDialogDone && !missionComplete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: "#1d4ed8", textShadow: "0 0 12px #1d4ed8, 0 0 24px #1e3a8a", pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearBoard && npcDialogDone && !missionComplete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -495,7 +514,7 @@ export default function CharacterGame() {
                      filter: nearNpc ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!npcDialogDone || (missionComplete && !npcAfterDone) || (clsAfterDone && !finalDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: "#1d4ed8", textShadow: "0 0 12px #1d4ed8, 0 0 24px #1e3a8a", pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearNpc && activeDialog !== "npc" && (!npcDialogDone || (missionComplete && !npcAfterDone) || (clsAfterDone && !finalDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -559,7 +578,9 @@ export default function CharacterGame() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #3b82f6", boxShadow: "4px 4px 0px #1e3a8a" }}>
-              <button onClick={() => { navigate("/level/chapter-1/play"); }}
+              <button
+                onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); a.playbackRate = 1.5; enterAudioRef.current = a; a.play().catch(() => {}); }}
+                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1/play"); } else { navigate("/level/chapter-1/play"); } }}
                 className="w-full py-3 font-bold text-white text-sm"
                 style={{ background: "#2563eb", border: "3px solid #1e3a8a", boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
@@ -581,7 +602,8 @@ export default function CharacterGame() {
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #60a5fa", boxShadow: "6px 6px 0px rgba(96,165,250,0.3)" }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: "#60a5fa" }}>[ 任務完成 ]</p>
               <button
-                onClick={() => { navigate("/"); }}
+                onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); }}
+                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/"); } else { navigate("/"); } }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: "rgba(96,165,250,0.15)", border: "2px solid #60a5fa", color: "#60a5fa" }}>
                 返回地圖
@@ -596,7 +618,9 @@ export default function CharacterGame() {
             style={{ background: "rgba(0,0,0,0.55)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #3b82f6", boxShadow: "4px 4px 0px #1e3a8a" }}>
-              <button onClick={() => { navigate("/level/chapter-2/play"); }}
+              <button
+                onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); a.playbackRate = 1.5; enterAudioRef.current = a; a.play().catch(() => {}); }}
+                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-2/play"); } else { navigate("/level/chapter-2/play"); } }}
                 className="w-full py-3 font-bold text-white text-sm"
                 style={{ background: "#2563eb", border: "3px solid #1e3a8a", boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →

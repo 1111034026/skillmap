@@ -11,7 +11,7 @@ type Direction = "front" | "back" | "left" | "right";
 const SPEED = 4;
 const CHAR_SIZE_PCT = 210 / 810;
 const NPC_SIZE_PCT  = 365 / 810;
-const INTERACT_DIST_PCT = 320 / 810;
+const INTERACT_DIST_PCT = 420 / 810;
 const WALK_BOUNDS = { minX: 0, minY: 350 / 810, maxY: 500/ 810 };
 
 const ORANGE = "#f97316";
@@ -29,13 +29,14 @@ const TOK = {
     "有些工作可以請 AI 機器人幫忙，有些工作還是要人來做。",
     "如果什麼都丟給 AI 機器人，有些地方就會出問題。",
     "等等輸送帶會送來任務卡，我需要你幫我一起分派工作。",
-    "一起分派工作前先想想看，這件事比較需要 AI 機器人整理，還是比較需要人來關心和判斷。",
+    "分派工作前先想想看，這件事比較需要 AI 機器人整理，還是比較需要人來關心和判斷。",
   ],
   dialogAfter: [
     "今天你幫了大忙。",
     "你不是只把工作分出去而已，你還學會了怎麼想：什麼事情適合請 AI 幫忙，什麼事情要留給人來做。",
-    "有些事 AI 很拿手，像是整理、統計、檢查。但有些事，像是關心別人、做公平判斷、決定真正重要的內容，還是要靠人類來做。",
-    "記住喔，會不會用 AI 很重要，但更重要的是知道什麼不能全交給 AI。",
+    "有些事 AI 很拿手，像是整理、統計、檢查。",
+    "但有些事，像是關心別人、做公平判斷、決定真正重要的內容，還是要靠人類來做。",
+    "記住喔，會不會用 AI 很重要，但更重要的是知道什麼事情能不能交給 AI 來做。",
   ],
 };
 
@@ -72,8 +73,22 @@ export default function CharacterGame3() {
   const containerRef = useRef<HTMLDivElement>(null);
   const keysRef      = useRef<Set<string>>(new Set());
   const rafRef       = useRef<number>(0);
+  const audioRef      = useRef<HTMLAudioElement | null>(null);
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!finalOverlay) return;
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/Clear .mp3`).play().catch(() => {});
+  }, [finalOverlay]);
 
   const getSprite = (d: Direction) => img(`/img/${d}_sprite.png`);
+
+  const playVoice = useCallback((line: string) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-3voice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+  }, []);
 
   const dialogLines = ch3CompleteRef.current && !tokAfterDoneRef.current
     ? TOK.dialogAfter : TOK.dialog;
@@ -89,7 +104,9 @@ export default function CharacterGame3() {
     if (next < lines.length) {
       dialogIndexRef.current = next;
       setDialogIndex(next);
+      playVoice(lines[next]);
     } else {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = false;
       dialogIndexRef.current = 0;
       setActiveDialog(false);
@@ -105,7 +122,7 @@ export default function CharacterGame3() {
         localStorage.setItem("tok_dialog_done", "1");
       }
     }
-  }, []);
+  }, [playVoice]);
 
   const openTokDialog = useCallback(() => {
     const canTalk = !tokDialogDoneRef.current ||
@@ -115,7 +132,10 @@ export default function CharacterGame3() {
     dialogIndexRef.current = 0;
     setActiveDialog(true);
     setDialogIndex(0);
-  }, []);
+    const lines = ch3CompleteRef.current && !tokAfterDoneRef.current
+      ? TOK.dialogAfter : TOK.dialog;
+    playVoice(lines[0]);
+  }, [playVoice]);
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
@@ -213,6 +233,7 @@ export default function CharacterGame3() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       cancelAnimationFrame(rafRef.current);
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     };
   }, [gameLoop, advanceDialog, openTokDialog]);
 
@@ -279,7 +300,7 @@ export default function CharacterGame3() {
                      filter: nearBoard ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {tokDialogDone && !ch3Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: ORANGE, textShadow: `0 0 12px ${ORANGE}`, pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearBoard && tokDialogDone && !ch3Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -311,7 +332,7 @@ export default function CharacterGame3() {
                      filter: nearTok ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
           {(!tokDialogDone || (ch3Complete && !tokAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
-              style={{ color: ORANGE, textShadow: `0 0 12px ${ORANGE}`, pointerEvents: "none", lineHeight: 1 }}>！</div>
+              style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
           )}
           {nearTok && !activeDialog && (!tokDialogDone || (ch3Complete && !tokAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-8 px-3 py-1 text-xs font-bold text-white animate-bounce"
@@ -333,7 +354,18 @@ export default function CharacterGame3() {
             style={{ background: "rgba(0,0,0,0.6)", zIndex: 30 }}>
             <div className="w-full max-w-sm p-5 flex flex-col gap-3"
               style={{ background: "rgba(12,15,26,0.98)", border: `3px solid ${ORANGE}`, boxShadow: `4px 4px 0px ${ORANGE}44` }}>
-              <button onClick={() => { navigate("/level/chapter-3/game"); }}
+              <button
+                onPointerDown={() => {
+                  const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+                  a.playbackRate = 1.5;
+                  enterAudioRef.current = a;
+                  a.play().catch(() => {});
+                }}
+                onClick={() => {
+                  const a = enterAudioRef.current;
+                  if (a && !a.ended) { a.onended = () => navigate("/level/chapter-3/game"); }
+                  else { navigate("/level/chapter-3/game"); }
+                }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${ORANGE}22`, border: `3px solid ${ORANGE}`, color: BRIGHT, boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
@@ -354,7 +386,18 @@ export default function CharacterGame3() {
             <div className="flex flex-col items-center gap-5 w-full max-w-sm px-4 py-8"
               style={{ background: "rgba(12,15,26,0.98)", border: `3px solid ${ORANGE}`, boxShadow: `6px 6px 0px ${ORANGE}44` }}>
               <p className="text-sm font-bold tracking-widest" style={{ color: ORANGE }}>[ 任務完成 ]</p>
-              <button onClick={() => { navigate("/"); }}
+              <button
+                onPointerDown={() => {
+                  const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+                  a.playbackRate = 1.5;
+                  enterAudioRef.current = a;
+                  a.play().catch(() => {});
+                }}
+                onClick={() => {
+                  const a = enterAudioRef.current;
+                  if (a && !a.ended) { a.onended = () => navigate("/"); }
+                  else { navigate("/"); }
+                }}
                 className="w-full py-3 font-bold text-sm tracking-widest"
                 style={{ background: `${ORANGE}20`, border: `2px solid ${ORANGE}`, color: BRIGHT }}>
                 返回地圖

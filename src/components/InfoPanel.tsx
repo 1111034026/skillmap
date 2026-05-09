@@ -1,5 +1,6 @@
 "use client";
 import { navigate } from "@/lib/navigate";
+import { useRef } from "react";
 
 import { Skill, SkillState } from "@/types";
 import { img } from "@/lib/imgPath";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function InfoPanel({ skill, state, onComplete }: Props) {
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
 
   if (!skill || !state) {
     return (
@@ -88,9 +90,21 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
         <div className="flex items-center gap-3 mt-auto">
           <button
             disabled={isLocked}
+            onPointerDown={() => {
+              const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+              a.playbackRate = 1.5;
+              enterAudioRef.current = a;
+              a.play().catch(() => {});
+            }}
             onClick={() => {
               const route = LEVEL_ROUTES[skill.id];
-              if (route) navigate(route);
+              if (!route) return;
+              const a = enterAudioRef.current;
+              if (a && !a.ended) {
+                a.onended = () => navigate(route);
+              } else {
+                navigate(route);
+              }
             }}
             className="px-6 py-2 text-sm font-bold tracking-widest transition-all hover:brightness-125 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
@@ -103,19 +117,6 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
             {isLocked ? "尚未解鎖" : "進入關卡 →"}
           </button>
 
-          {!isCompleted && !isLocked && (
-            <button
-              onClick={() => onComplete(skill.id)}
-              className="px-4 py-2 text-sm tracking-widest transition-all hover:brightness-125 active:scale-95"
-              style={{
-                background: "#0e0a06",
-                border: `1px solid ${orange}55`,
-                color: `${orange}88`,
-              }}
-            >
-              標記完成
-            </button>
-          )}
         </div>
       </div>
     </div>

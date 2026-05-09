@@ -11,12 +11,10 @@ const BRIGHT = "#4ade80";
 const INTRO_LINES = [
   "開始做作品前，要先想好你想做什麼。",
   "如果你自己都還沒決定方向，AI 設計機就很容易跑出一大堆亂亂的點子。",
-  "你先選一個主題。等你有了方向，AI 設計機才比較知道要往哪裡幫你想。",
+  "先選一個主題。這樣 AI 設計機才比較知道要怎麼幫你想。",
 ];
 
 const AFTER_LINES = [
-  "很好，我們現在有方向了。",
-  "先有自己的想法，再請 AI 設計機幫忙，作品才不會亂掉。",
   "接下來，讓 AI 設計機幫我們長出一些點子吧。",
 ];
 
@@ -41,6 +39,29 @@ export default function Screen1Theme({ onSelect }: Props) {
   const [chosen,    setChosen]   = useState<C2Theme | null>(null);
   const [showIdle,  setShowIdle] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioRef  = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (phase !== "intro") {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      return;
+    }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-2gamevoice/${encodeURIComponent(INTRO_LINES[introIdx])}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); };
+  }, [introIdx, phase]);
+
+  useEffect(() => {
+    if (phase !== "after") return;
+    const lines = chosen ? [THEME_LINE[chosen.id] ?? "", ...AFTER_LINES] : AFTER_LINES;
+    const line = lines[afterIdx];
+    if (!line) return;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-2gamevoice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); };
+  }, [afterIdx, phase, chosen]);
 
   // E key advances dialog
   useEffect(() => {
@@ -116,6 +137,7 @@ export default function Screen1Theme({ onSelect }: Props) {
             <div className="grid grid-cols-3 gap-5 w-full max-w-3xl">
               {C2_THEMES.map((theme, i) => (
                 <button key={theme.id}
+                  onPointerDown={() => new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/select.mp3`).play().catch(() => {})}
                   onClick={() => handleSelect(theme)}
                   className="flex flex-col items-center gap-4 py-8 px-4 transition-all hover:scale-105 active:scale-95"
                   style={{

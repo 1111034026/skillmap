@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { MiaPortrait } from "./MiaPortrait";
 
@@ -8,7 +8,7 @@ const GREEN = "#22c55e";
 const BG    = "#041208";
 
 const LINES_A = [
-  "歡迎來到智能動物園。",
+  "歡迎來到智能動物園，我是管理員米亞。",
   "這裡有一台新的食物分類機。以後我們想請它幫忙分食物。",
   "豬吃蘋果，猴子吃香蕉。",
   "可是現在它還不太會分，常常把食物都猜成同一種。",
@@ -29,6 +29,18 @@ export default function Screen1Intro({ onDone }: Props) {
 
   const lines = phase === "a" ? LINES_A : LINES_B;
   const { ready } = useDialogReady(`${phase}-${idx}`);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playVoice = useCallback((text: string) => {
+    if (audioRef.current) audioRef.current.pause();
+    const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-4voice/${encodeURIComponent(text)}.mp3`);
+    audioRef.current = a;
+    a.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    playVoice(lines[idx]);
+  }, [phase, idx]);
 
   const advance = () => {
     if (!ready) return;

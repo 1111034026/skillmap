@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const ORANGE = "#f97316";
 const BRIGHT = "#fb923c";
@@ -8,8 +8,11 @@ const BRIGHT = "#fb923c";
 interface Props { onDone: () => void; }
 
 export default function Screen5Complete({ onDone }: Props) {
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     try { localStorage.setItem("chapter3_complete", "1"); } catch { /* ignore */ }
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/finish.mp3`).play().catch(() => {});
   }, []);
 
   return (
@@ -34,7 +37,17 @@ export default function Screen5Complete({ onDone }: Props) {
       </div>
 
       <button
-        onClick={onDone}
+        onPointerDown={() => {
+          const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`);
+          a.playbackRate = 1.5;
+          enterAudioRef.current = a;
+          a.play().catch(() => {});
+        }}
+        onClick={() => {
+          const a = enterAudioRef.current;
+          if (a && !a.ended) { a.onended = () => onDone(); }
+          else { onDone(); }
+        }}
         className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
         style={{ background: `rgba(249,115,22,0.12)`, border: `2px solid ${ORANGE}`, boxShadow: `4px 4px 0px rgba(249,115,22,0.4)`, color: ORANGE }}>
         ▶ 回到地圖

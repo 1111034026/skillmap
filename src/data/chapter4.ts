@@ -25,8 +25,8 @@ export interface TestItem {
   round2Guess: MachineGuess;
   round1Correct: boolean;
   round2Correct: boolean;
-  mia1: string;
-  mia2: string;
+  mia1: string[];
+  mia2: string[];
 }
 
 export const TEST_ITEMS: TestItem[] = [
@@ -34,14 +34,14 @@ export const TEST_ITEMS: TestItem[] = [
     food: { id: "test_apple",  name: "蘋果", img: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/img/chapter4taskfruit/apple1.png`, type: "apple" },
     round1Guess: "apple", round1Correct: true,
     round2Guess: "apple", round2Correct: true,
-    mia1: "這次分對了。因為它剛剛真的有學過蘋果。",
-    mia2: "很好，蘋果分對了。",
+    mia1: ["這次分對了。因為它剛剛有學過蘋果的樣子。"],
+    mia2: ["很好，蘋果分對了。"],
   },
   {
     food: { id: "test_banana", name: "香蕉", img: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/img/chapter4taskfruit/banana1.png`, type: "banana" },
     round1Guess: "apple", round1Correct: false,
     round2Guess: "banana", round2Correct: true,
-    mia1: "你看，它把香蕉也分析成蘋果了。不是它故意亂猜，而是它目前只學過蘋果。如果你只給它看一種，它就只會一直往那一種去想。",
-    mia2: "你看，它這次也把香蕉分對了。因為你教了它蘋果和香蕉，它就不會再把所有東西都分析成蘋果。",
+    mia1: ["它把香蕉也分析成蘋果了。不是它故意亂猜，而是它目前只學過蘋果。", "如果你只給它學一種東西，它就只會一直往那一種東西去想。"],
+    mia2: ["你看，它這次也把香蕉分對了。因為你教了它蘋果和香蕉，它就不會再把所有東西都分析成蘋果。"],
   },
 ];

@@ -1,7 +1,7 @@
 "use client";
 import { navigate } from "@/lib/navigate";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CLASSIFIER_QUESTIONS } from "@/data/classifier";
 import { img } from "@/lib/imgPath";
 
@@ -26,6 +26,21 @@ const NPC = () => (
 export default function ClassifierGame() {
   const [qIndex, setQIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("game");
+  const [voiceDone, setVoiceDone] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    setVoiceDone(false);
+    let cancelled = false;
+    const done = () => { if (!cancelled) setVoiceDone(true); };
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent(CLASSIFIER_QUESTIONS[qIndex].training)}.mp3`);
+    audioRef.current = audio;
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  }, [qIndex]);
 
   const total = CLASSIFIER_QUESTIONS.length;
   const q = CLASSIFIER_QUESTIONS[qIndex];
@@ -33,14 +48,17 @@ export default function ClassifierGame() {
 
   const handleSelect = (i: number) => {
     if (i === q.correctIndex) {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/correct.mp3`).play().catch(() => {});
       setScreen("correct");
     } else {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/error.mp3`).play().catch(() => {});
       setScreen("wrong");
     }
   };
 
   const handleNext = () => {
     if (isLast) {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/finish.mp3`).play().catch(() => {});
       setScreen("complete");
     } else {
       setQIndex((n) => n + 1);
@@ -153,9 +171,13 @@ export default function ClassifierGame() {
           <p className="text-xs" style={{ color: "rgba(208,238,255,0.6)" }}>回聲港 · {total} 題全部完成</p>
         </div>
 
-        <button onClick={() => {
+        <button
+          onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); }}
+          onClick={() => {
             localStorage.setItem("classifier_complete", "1");
-            navigate("/level/chapter-1");
+            const a = enterAudioRef.current;
+            if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1"); }
+            else { navigate("/level/chapter-1"); }
           }}
           className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
           style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${BLUE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: BLUE }}>
@@ -240,21 +262,23 @@ export default function ClassifierGame() {
         </div>
 
         {/* Options */}
-        <div className="w-full max-w-3xl flex flex-col gap-2">
-          {q.options.map((opt, i) => (
-            <button key={i}
-              onClick={() => handleSelect(i)}
-              className="w-full px-5 py-4 text-left text-sm font-medium tracking-wide transition-all hover:brightness-125"
-              style={{
-                border: `2px solid rgba(0,170,255,0.35)`,
-                background: "rgba(0,170,255,0.04)",
-                color: "#D0EEFF",
-                cursor: "pointer",
-              }}>
-              {String.fromCharCode(65 + i)}．{opt}
-            </button>
-          ))}
-        </div>
+        {voiceDone && (
+          <div className="w-full max-w-3xl flex flex-col gap-2">
+            {q.options.map((opt, i) => (
+              <button key={i}
+                onClick={() => handleSelect(i)}
+                className="w-full px-5 py-4 text-left text-sm font-medium tracking-wide transition-all hover:brightness-125"
+                style={{
+                  border: `2px solid rgba(0,170,255,0.35)`,
+                  background: "rgba(0,170,255,0.04)",
+                  color: "#D0EEFF",
+                  cursor: "pointer",
+                }}>
+                {String.fromCharCode(65 + i)}．{opt}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

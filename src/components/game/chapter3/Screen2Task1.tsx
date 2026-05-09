@@ -22,14 +22,49 @@ export default function Screen2Task1({ onDone }: Props) {
   const [dropped, setDropped]   = useState<"ai" | "human" | null>(null);
   const [hoverId, setHoverId]   = useState<string | null>(null);
   const draggingRef = useRef(false);
+  const audioRef       = useRef<HTMLAudioElement | null>(null);
+  const prevCardIdxRef = useRef(-1);
 
-  const card     = TASK1_CARDS[cardIdx];
+  const card      = TASK1_CARDS[cardIdx];
   const isCorrect = dropped === card?.answer;
-  const isLast   = cardIdx === TASK1_CARDS.length - 1;
+  const isLast    = cardIdx === TASK1_CARDS.length - 1;
   const { ready } = useDialogReady(`${phase}-${cardIdx}`, phase !== "card");
+
+  useEffect(() => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    let line: string;
+    if (phase === "card") {
+      if (prevCardIdxRef.current === cardIdx) return; // 答錯重試，不重播
+      prevCardIdxRef.current = cardIdx;
+      const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+      const conveyor = new Audio(`${BASE}/Voice/chapter-3gamevoice/conveyor%20belt.mp3`);
+      audioRef.current = conveyor;
+      conveyor.play().catch(() => {});
+      const timer = setTimeout(() => {
+        const voice = new Audio(`${BASE}/Voice/chapter-3gamevoice/${encodeURIComponent(card.title)}.mp3`);
+        audioRef.current = voice;
+        voice.play().catch(() => {});
+      }, 800);
+      return () => { clearTimeout(timer); conveyor.pause(); };
+    } else if (phase === "alldone") {
+      line = TOK_DONE;
+    } else {
+      line = isCorrect ? card.tokCorrect : card.tokWrong;
+    }
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-3gamevoice/${encodeURIComponent(line)}.mp3`);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    return () => { audio.pause(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, cardIdx]);
 
   const handleDrop = (zone: "ai" | "human") => {
     if (phase !== "card") return;
+    const correct = zone === card?.answer;
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/put in.mp3`).play().catch(() => {});
+    setTimeout(() => {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    }, 300);
     setDropped(zone);
     setPhase("feedback");
   };
@@ -94,7 +129,7 @@ export default function Screen2Task1({ onDone }: Props) {
           {/* Task card sitting on conveyor */}
           <div key={card.id}
             draggable={phase === "card"}
-            onDragStart={(e) => { draggingRef.current = true; e.dataTransfer.effectAllowed = "move"; }}
+            onDragStart={(e) => { draggingRef.current = true; e.dataTransfer.effectAllowed = "move"; new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/drag.mp3`).play().catch(() => {}); }}
             onDragEnd={() => { draggingRef.current = false; }}
             style={{
               position: "absolute",

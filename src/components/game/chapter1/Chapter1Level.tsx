@@ -14,6 +14,7 @@ type Screen = "mission" | "tutorial" | "game" | "correct" | "wrong" | "complete"
 export default function Chapter1Level() {
   const [screen, setScreen] = useState<Screen>("game");
   const [questionIndex, setQuestionIndex] = useState(0);
+  const [isRetry, setIsRetry] = useState(false);
   const [correctMsg, setCorrectMsg] = useState("");
   const [wrongMsg, setWrongMsg] = useState("");
   const [wrongHints, setWrongHints] = useState<string[]>([]);
@@ -22,6 +23,7 @@ export default function Chapter1Level() {
   const isLast = questionIndex === total - 1;
 
   const handleCorrect = () => {
+    setIsRetry(false);
     setCorrectMsg(QUESTIONS[questionIndex].correctMsg);
     setScreen("correct");
   };
@@ -34,6 +36,7 @@ export default function Chapter1Level() {
 
   const handleNext = () => {
     if (isLast) {
+      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/finish.mp3`).play().catch(() => {});
       setScreen("complete");
     } else {
       setQuestionIndex((i) => i + 1);
@@ -41,7 +44,7 @@ export default function Chapter1Level() {
     }
   };
 
-  const handleRetry = () => setScreen("game");
+  const handleRetry = () => { setIsRetry(true); setScreen("game"); };
 
   return (
     <>
@@ -68,10 +71,11 @@ export default function Chapter1Level() {
       {screen === "tutorial" && <Screen2Tutorial onDone={() => setScreen("game")} />}
       {screen === "game"     && (
         <Screen3Game
-          key={questionIndex}
+          key={`${questionIndex}-${isRetry}`}
           question={QUESTIONS[questionIndex]}
           questionIndex={questionIndex}
           total={total}
+          skipVoice={isRetry}
           onCorrect={handleCorrect}
           onWrong={handleWrong}
         />

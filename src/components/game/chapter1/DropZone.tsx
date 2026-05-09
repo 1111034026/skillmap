@@ -26,7 +26,7 @@ export default function DropZone({ label, color, termLabel, cards, onDragOver, o
         position: "relative",
       }}
       onDragOver={onDragOver}
-      onDrop={onDrop}
+      onDrop={e => { new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/put in.mp3`).play().catch(() => {}); onDrop(e); }}
     >
       {/* Corner brackets */}
       <span style={{ position: "absolute", top: -1, left: -1, width: 10, height: 10, borderTop: `3px solid ${color}`, borderLeft: `3px solid ${color}` }} />
