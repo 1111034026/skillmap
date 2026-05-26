@@ -41,6 +41,7 @@ export default function Screen2Task1({ onDone }: Props) {
       audioRef.current = conveyor;
       conveyor.play().catch(() => {});
       const timer = setTimeout(() => {
+        conveyor.pause();
         const voice = new Audio(`${BASE}/Voice/chapter-3gamevoice/${encodeURIComponent(card.title)}.mp3`);
         audioRef.current = voice;
         voice.play().catch(() => {});

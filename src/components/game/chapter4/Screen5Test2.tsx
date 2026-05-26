@@ -48,7 +48,7 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     if (!showResult) return;
     if (thinkAudioRef.current) { thinkAudioRef.current.pause(); thinkAudioRef.current = null; }
-    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/correct.mp3`).play().catch(() => {});
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${item.round2Correct ? "correct" : "error"}.mp3`).play().catch(() => {});
   }, [showResult]);
 
   useEffect(() => {

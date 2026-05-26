@@ -1,6 +1,6 @@
 "use client";
 import { navigate } from "@/lib/navigate";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 import { Skill, SkillState } from "@/types";
 import { img } from "@/lib/imgPath";
@@ -20,6 +20,15 @@ interface Props {
 
 export default function InfoPanel({ skill, state, onComplete }: Props) {
   const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (enterAudioRef.current) {
+        enterAudioRef.current.pause();
+        enterAudioRef.current = null;
+      }
+    };
+  }, []);
 
   if (!skill || !state) {
     return (

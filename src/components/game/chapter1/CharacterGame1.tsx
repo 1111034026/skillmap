@@ -580,7 +580,7 @@ export default function CharacterGame() {
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #3b82f6", boxShadow: "4px 4px 0px #1e3a8a" }}>
               <button
                 onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); a.playbackRate = 1.5; enterAudioRef.current = a; a.play().catch(() => {}); }}
-                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1/play"); } else { navigate("/level/chapter-1/play"); } }}
+                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1/game"); } else { navigate("/level/chapter-1/game"); } }}
                 className="w-full py-3 font-bold text-white text-sm"
                 style={{ background: "#2563eb", border: "3px solid #1e3a8a", boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
@@ -620,7 +620,7 @@ export default function CharacterGame() {
               style={{ background: "rgba(8,20,50,0.98)", border: "3px solid #3b82f6", boxShadow: "4px 4px 0px #1e3a8a" }}>
               <button
                 onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); a.playbackRate = 1.5; enterAudioRef.current = a; a.play().catch(() => {}); }}
-                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-2/play"); } else { navigate("/level/chapter-2/play"); } }}
+                onClick={() => { const a = enterAudioRef.current; if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1/classifier"); } else { navigate("/level/chapter-1/classifier"); } }}
                 className="w-full py-3 font-bold text-white text-sm"
                 style={{ background: "#2563eb", border: "3px solid #1e3a8a", boxShadow: "4px 4px 0px #000" }}>
                 開始任務 →
