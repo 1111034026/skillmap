@@ -27,8 +27,17 @@ export default function ClassifierGame() {
   const [qIndex, setQIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("game");
   const [voiceDone, setVoiceDone] = useState(false);
+
+  const shuffle = (q: typeof CLASSIFIER_QUESTIONS[0]) =>
+    q.options.map((text, i) => ({ text, originalIndex: i })).sort(() => Math.random() - 0.5);
+  const [shuffledOptions, setShuffledOptions] = useState(() => CLASSIFIER_QUESTIONS[0].options.map((text, i) => ({ text, originalIndex: i })));
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    setShuffledOptions(shuffle(CLASSIFIER_QUESTIONS[qIndex]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qIndex]);
 
   useEffect(() => {
     setVoiceDone(false);
@@ -264,9 +273,9 @@ export default function ClassifierGame() {
         {/* Options */}
         {voiceDone && (
           <div className="w-full max-w-3xl flex flex-col gap-2">
-            {q.options.map((opt, i) => (
-              <button key={i}
-                onClick={() => handleSelect(i)}
+            {shuffledOptions.map((opt, i) => (
+              <button key={opt.originalIndex}
+                onClick={() => handleSelect(opt.originalIndex)}
                 className="w-full px-5 py-4 text-left text-sm font-medium tracking-wide transition-all hover:brightness-125"
                 style={{
                   border: `2px solid rgba(0,170,255,0.35)`,
@@ -274,7 +283,7 @@ export default function ClassifierGame() {
                   color: "#D0EEFF",
                   cursor: "pointer",
                 }}>
-                {String.fromCharCode(65 + i)}．{opt}
+                {String.fromCharCode(65 + i)}．{opt.text}
               </button>
             ))}
           </div>

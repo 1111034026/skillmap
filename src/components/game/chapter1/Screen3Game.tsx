@@ -33,6 +33,9 @@ export default function Screen3Game({ question, questionIndex, total, skipVoice,
     return () => { cancelled = true; audio.pause(); };
   }, []);
 
+  const [shuffledCards, setShuffledCards] = useState(question.cards);
+  useEffect(() => { setShuffledCards([...question.cards].sort(() => Math.random() - 0.5)); }, []);
+
   const [placements, setPlacements] = useState<Record<string, Zone>>(
     Object.fromEntries(question.cards.map((c) => [c.id, "hand"]))
   );
@@ -68,7 +71,7 @@ export default function Screen3Game({ question, questionIndex, total, skipVoice,
     }
   };
 
-  const inHand    = question.cards.filter((c) => placements[c.id] === "hand");
+  const inHand    = shuffledCards.filter((c) => placements[c.id] === "hand");
   const usable    = question.cards.filter((c) => placements[c.id] === "usable");
   const review    = question.cards.filter((c) => placements[c.id] === "review");
   const unsuit    = question.cards.filter((c) => placements[c.id] === "unsuitable");

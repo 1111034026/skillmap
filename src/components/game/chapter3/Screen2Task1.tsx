@@ -17,25 +17,27 @@ type Phase = "card" | "feedback" | "alldone";
 interface Props { onDone: () => void; }
 
 export default function Screen2Task1({ onDone }: Props) {
+  const [cards, setCards] = useState(TASK1_CARDS);
+  useEffect(() => { setCards([...TASK1_CARDS].sort(() => Math.random() - 0.5)); }, []);
   const [cardIdx, setCardIdx]   = useState(0);
   const [phase,   setPhase]     = useState<Phase>("card");
   const [dropped, setDropped]   = useState<"ai" | "human" | null>(null);
   const [hoverId, setHoverId]   = useState<string | null>(null);
   const draggingRef = useRef(false);
   const audioRef       = useRef<HTMLAudioElement | null>(null);
-  const prevCardIdxRef = useRef(-1);
+  const prevCardIdRef  = useRef<string | null>(null);
 
-  const card      = TASK1_CARDS[cardIdx];
+  const card      = cards[cardIdx];
   const isCorrect = dropped === card?.answer;
-  const isLast    = cardIdx === TASK1_CARDS.length - 1;
+  const isLast    = cardIdx === cards.length - 1;
   const { ready } = useDialogReady(`${phase}-${cardIdx}`, phase !== "card");
 
   useEffect(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     let line: string;
     if (phase === "card") {
-      if (prevCardIdxRef.current === cardIdx) return; // 答錯重試，不重播
-      prevCardIdxRef.current = cardIdx;
+      if (prevCardIdRef.current === card?.id) return; // 答錯重試，不重播
+      prevCardIdRef.current = card?.id ?? null;
       const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       const conveyor = new Audio(`${BASE}/Voice/chapter-3gamevoice/conveyor%20belt.mp3`);
       audioRef.current = conveyor;
@@ -57,7 +59,7 @@ export default function Screen2Task1({ onDone }: Props) {
     audio.play().catch(() => {});
     return () => { audio.pause(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, cardIdx]);
+  }, [phase, cardIdx, card?.id]);
 
   const handleDrop = (zone: "ai" | "human") => {
     if (phase !== "card") return;
