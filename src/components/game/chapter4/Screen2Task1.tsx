@@ -90,7 +90,7 @@ export default function Screen2Task1({ onDone }: Props) {
         </span>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8">
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8" style={{ paddingBottom: "160px" }}>
         <p className="text-sm tracking-wide text-center" style={{ color: `${GREEN}88` }}>
           把蘋果的圖片放進機器，讓機器學習蘋果的樣子
         </p>
@@ -127,20 +127,35 @@ export default function Screen2Task1({ onDone }: Props) {
           })}
         </div>
 
-        {/* Classification robot drop zone */}
-        <div className="flex flex-col items-center gap-2">
-          <div
-            onDragOver={e => { e.preventDefault(); setHovering(true); }}
-            onDragLeave={() => setHovering(false)}
-            onDrop={e => { e.preventDefault(); setHovering(false); handleDrop(); }}
-            style={{
-              position: "relative", cursor: "default", transition: "all 0.2s",
-              filter: hovering ? `brightness(1.3) drop-shadow(0 0 12px ${GREEN})` : isDone ? `drop-shadow(0 0 8px ${GREEN})` : "brightness(1)",
-              transform: hovering ? "scale(1.05)" : "scale(1)",
+        {/* Placed items — horizontal row above robot */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 56 }}>
+          <span style={{ fontSize: "0.65rem", color: `${GREEN}88`, letterSpacing: "0.1em", marginRight: 4 }}>已放入</span>
+          {placed.map(food => (
+            <div key={food.id} style={{
+              width: 48, height: 48,
+              border: `1px solid ${GREEN}66`,
+              background: `${GREEN}11`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              animation: "fadeUp 0.2s ease",
             }}>
-            <img src={img("/img/Classification robot.png")} alt="食物分類機" draggable={false}
-              style={{ width: 280, height: "auto", imageRendering: "pixelated", display: "block" }} />
-          </div>
+              <img src={food.img} alt={food.name} draggable={false}
+                style={{ width: 34, height: 34, objectFit: "contain", imageRendering: "pixelated" }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Classification robot drop zone */}
+        <div
+          onDragOver={e => { e.preventDefault(); setHovering(true); }}
+          onDragLeave={() => setHovering(false)}
+          onDrop={e => { e.preventDefault(); setHovering(false); handleDrop(); }}
+          style={{
+            position: "relative", cursor: "default", transition: "all 0.2s",
+            filter: hovering ? `brightness(1.3) drop-shadow(0 0 12px ${GREEN})` : isDone ? `drop-shadow(0 0 8px ${GREEN})` : "brightness(1)",
+            transform: hovering ? "scale(1.05)" : "scale(1)",
+          }}>
+          <img src={img("/img/Classification robot.png")} alt="食物分類機" draggable={false}
+            style={{ width: 280, height: "auto", imageRendering: "pixelated", display: "block" }} />
         </div>
       </div>
 

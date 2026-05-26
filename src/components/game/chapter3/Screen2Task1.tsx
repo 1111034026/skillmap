@@ -146,7 +146,8 @@ export default function Screen2Task1({ onDone }: Props) {
                 filter: phase === "feedback" ? (isCorrect ? "sepia(1) hue-rotate(80deg) saturate(2)" : "sepia(1) hue-rotate(300deg) saturate(3)") : "none",
                 transition: "filter 0.3s" }} />
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: 8, padding: "16px 28px" }}>
+              alignItems: "center", justifyContent: "center", gap: 6, padding: "16px 28px" }}>
+              <span style={{ fontSize: "2.8rem", lineHeight: 1 }}>{card.emoji}</span>
               <p className="text-base font-bold text-center tracking-wide" style={{ color: "#3b2a1a" }}>
                 {card.title}
               </p>

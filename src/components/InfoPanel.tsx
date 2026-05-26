@@ -54,11 +54,11 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
         style={{ border: `2px solid ${orange}44`, borderTop: "none" }}>
         {/* Header */}
         <div>
-          <div className="text-sm tracking-widest mb-0.5" style={{ color: `${orange}66` }}>
+          <div className="text-base tracking-widest mb-0.5" style={{ color: `${orange}66` }}>
             關卡資訊 ////
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-xl font-bold tracking-widest" style={{ color: orange, textShadow: `0 0 8px ${orange}` }}>
+            <div className="text-2xl font-bold tracking-widest" style={{ color: orange, textShadow: `0 0 8px ${orange}` }}>
               {skill.title}
             </div>
             {(isCompleted || isLocked) && (
@@ -78,10 +78,10 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
 
         {/* Description */}
         <div className="flex flex-col gap-1">
-          <p className="text-sm tracking-wide leading-relaxed" style={{ color: "#ffffff" }}>
+          <p className="text-base tracking-wide leading-relaxed" style={{ color: "#ffffff" }}>
             {skill.description}
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: "#cccccc", whiteSpace: "pre-line" }}>
+          <p className="text-base leading-relaxed" style={{ color: "#cccccc", whiteSpace: "pre-line" }}>
             {skill.detail}
           </p>
         </div>
