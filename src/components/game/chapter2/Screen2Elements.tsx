@@ -190,9 +190,16 @@ export default function Screen2Elements({ theme, elementType, showTaskIntro, isL
   };
 
   const afterMachineSwap = () => {
-    const el = drawOne(pool, usedIds);
-    if (!el) { onDone(current!); return; }
-    setUsedIds((prev) => { const s = new Set(prev); s.add(el.id); return s; });
+    let el = drawOne(pool, usedIds);
+    if (!el) {
+      // All items shown — loop back, only exclude current to avoid immediate repeat
+      const resetUsed = new Set(current ? [current.id] : [] as string[]);
+      el = drawOne(pool, resetUsed);
+      if (!el) { onDone(current!); return; }
+      setUsedIds(new Set([...(current ? [current.id] : []), el.id]));
+    } else {
+      setUsedIds((prev) => { const s = new Set(prev); s.add(el!.id); return s; });
+    }
     setCurrent(el);
     go("show");
   };
