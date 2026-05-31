@@ -38,7 +38,7 @@ export const QUESTIONS: Question[] = [
     wrongMsg: "再看看，這裡真的適合安靜看書嗎",
     cards: [
       { id: "q2_library", label: "圖書館\n很安靜",         icon: "", zone: "usable",     wrongHint: "" },
-      { id: "q2_sea",     label: "看海區\n人不多但有風聲",  icon: "", zone: "review",     wrongHint: "人不多，但要看看風聲大不大，需要再判斷。" },
+      { id: "q2_sea",     label: "看海區\n人不多，但可能有風聲",  icon: "", zone: "review",     wrongHint: "人不多，但要看看風聲大不大，需要再判斷。" },
       { id: "q2_plaza",   label: "表演廣場\n現在很熱鬧",    icon: "", zone: "unsuitable", wrongHint: "表演廣場現在很熱鬧，不適合看書。" },
     ],
   },
