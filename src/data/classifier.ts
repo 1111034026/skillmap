@@ -33,9 +33,9 @@ export const CLASSIFIER_QUESTIONS: ClassifierQuestion[] = [
     aiResult: "安靜地點",
     question: "AI 最可能學到了什麼？",
     options: [
-      "它把人少當成重點",
+      "它把人不多當成重點",
       "它真的聽見風聲很小",
-      "人不多的地方一定都安靜",
+      "人多的地方會很吵",
     ],
     correctIndex: 0,
     correctFeedback: "沒錯。它先看見人少，卻沒看見這裡其實有很大的風聲。",
