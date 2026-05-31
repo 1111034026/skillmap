@@ -271,23 +271,21 @@ export default function ClassifierGame() {
         </div>
 
         {/* Options */}
-        {voiceDone && (
-          <div className="w-full max-w-3xl flex flex-col gap-2">
-            {shuffledOptions.map((opt, i) => (
-              <button key={opt.originalIndex}
-                onClick={() => handleSelect(opt.originalIndex)}
-                className="w-full px-5 py-4 text-left text-sm font-medium tracking-wide transition-all hover:brightness-125"
-                style={{
-                  border: `2px solid rgba(0,170,255,0.35)`,
-                  background: "rgba(0,170,255,0.04)",
-                  color: "#D0EEFF",
-                  cursor: "pointer",
-                }}>
-                {String.fromCharCode(65 + i)}．{opt.text}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="w-full max-w-3xl flex flex-col gap-2">
+          {shuffledOptions.map((opt, i) => (
+            <button key={opt.originalIndex}
+              onClick={() => handleSelect(opt.originalIndex)}
+              className="w-full px-5 py-4 text-left text-sm font-medium tracking-wide transition-all hover:brightness-125"
+              style={{
+                border: `2px solid rgba(0,170,255,0.35)`,
+                background: "rgba(0,170,255,0.04)",
+                color: "#D0EEFF",
+                cursor: "pointer",
+              }}>
+              {String.fromCharCode(65 + i)}．{opt.text}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
