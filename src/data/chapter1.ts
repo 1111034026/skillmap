@@ -22,9 +22,9 @@ export const TUTORIAL_QUESTION: Question = {
   correctMsg: "很好，這個地方現在比較安全",
   wrongMsg: "再想一想，這裡真的適合下雨天嗎",
   cards: [
-    { id: "indoor", label: "室內等候區\n現在有開",   icon: "", zone: "usable",     wrongHint: "" },
-    { id: "shed",   label: "港口休息棚\n上面有屋頂", icon: "", zone: "review",     wrongHint: "有屋頂，但還要再看看是否夠安全。" },
-    { id: "dock",   label: "戶外碼頭邊\n離船最近",   icon: "", zone: "unsuitable", wrongHint: "下雨天站在戶外碼頭邊不安全。" },
+    { id: "indoor", label: "室內候船室\n能安全遮雨",             icon: "", zone: "usable",     wrongHint: "" },
+    { id: "shed",   label: "戶外休息棚\n能遮雨，但風雨可能吹進來", icon: "", zone: "review",     wrongHint: "有屋頂，但還要再看看是否夠安全。" },
+    { id: "dock",   label: "戶外碼頭邊\n不能遮雨，地板濕滑",       icon: "", zone: "unsuitable", wrongHint: "下雨天站在戶外碼頭邊不安全。" },
   ],
 };
 
