@@ -56,6 +56,7 @@ export default function ClassifierGame() {
   const isLast = qIndex + 1 >= total;
 
   const handleSelect = (i: number) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     if (i === q.correctIndex) {
       new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/correct.mp3`).play().catch(() => {});
       setScreen("correct");
