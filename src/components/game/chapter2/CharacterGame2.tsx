@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import WasdHint from "@/components/game/WasdHint";
 import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
@@ -287,6 +288,8 @@ export default function CharacterGame2() {
         backgroundPosition: "center",
         cursor: "default",
       }}>
+        <WasdHint />
+
         {/* Stage artwork — overlaid on stage.png screen area */}
         {artworkData && <StageArtwork data={artworkData} cw={cw} ch={ch} />}
 

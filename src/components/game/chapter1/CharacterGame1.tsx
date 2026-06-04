@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
 import { img } from "@/lib/imgPath";
+import WasdHint from "@/components/game/WasdHint";
 
 type Direction = "front" | "back" | "left" | "right";
 
@@ -422,6 +423,8 @@ export default function CharacterGame() {
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden"
         style={{ backgroundImage: `url(${img("/img/BK1.png")})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "default" }}>
+
+        <WasdHint />
 
         {/* Classifier */}
         <div className="absolute"

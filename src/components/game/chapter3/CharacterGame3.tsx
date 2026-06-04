@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import WasdHint from "@/components/game/WasdHint";
 import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
@@ -273,6 +274,8 @@ export default function CharacterGame3() {
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden"
         style={{ backgroundImage: `url(${img("/img/BK3.png")})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "default" }}>
+
+        <WasdHint />
 
         {/* Background gears (decorative) */}
         <div style={{ position: "absolute", top: 40, left: 40, fontSize: 180, opacity: 0.04,

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
+import WasdHint from "@/components/game/WasdHint";
 import { img } from "@/lib/imgPath";
 
 type Direction = "front" | "back" | "left" | "right";
@@ -243,6 +244,8 @@ export default function CharacterGame4() {
       {/* Game area */}
       <div ref={containerRef} className="flex-1 relative overflow-hidden"
         style={{ backgroundImage: `url(${img("/img/BK4.png")})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+
+        <WasdHint />
 
         {/* Food classification machine */}
         <div className="absolute"
