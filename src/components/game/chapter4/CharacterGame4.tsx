@@ -12,18 +12,18 @@ type Direction = "front" | "back" | "left" | "right";
 const GREEN  = "#22c55e";
 const BRIGHT = "#4ade80";
 
-const MIA_POS       = { x: 380 / 1440, y: 330 / 810 };
+const MIA_POS       = { x: 450 / 1440, y: 330 / 810 };
 const MACHINE_POS   = { x: 840 / 1440, y: 300 / 810, width: 340 / 1440 };
 const NPC_SIZE_PCT  = 300 / 810;
 const CHAR_SIZE_PCT = 210 / 810;
-const WALK_BOUNDS   = { minX: 0, minY: 320 / 810, maxY: 510 / 810 };
+const WALK_BOUNDS   = { minX: 0, minY: 320 / 810, maxY: 550 / 810 };
 const SPEED         = 4;
 const INTERACT_DIST = 420 / 810;
 
 const MIA_DIALOG: string[] = [
-  "歡迎來到智能動物園，我是管理員米亞。",
-  "動物園來了一台新的食物分類機器人。",
-  "我們想請它幫忙分析食物，這樣就可以更快把食物送給不同動物。",
+  "歡迎來到智能超市，我是店長米亞。",
+  "超市來了一台新的食物分類機器人。",
+  "我們想請它幫忙分析食物，這樣就可以更快把食物分類上架。",
   "可是現在它還認不得蘋果和香蕉，常常把兩者搞混。",
   "請你幫我一起來訓練它。",
 ];
@@ -41,10 +41,10 @@ export default function CharacterGame4() {
   const [cw, setCw] = useState(1440);
   const [ch, setCh] = useState(810);
 
-  const [pos, setPos]     = useState({ x: 150 / 1440, y: 410 / 810 });
+  const [pos, setPos]     = useState({ x: 150 / 1440, y: 550 / 810 });
   const [dir, setDir]     = useState<Direction>("front");
   const [moving, setMoving] = useState(false);
-  const posRef  = useRef({ x: 150 / 1440, y: 410 / 810 });
+  const posRef  = useRef({ x: 150 / 1440, y: 550 / 810 });
   const keysRef = useRef<Set<string>>(new Set());
   const rafRef  = useRef<number>(0);
 
@@ -167,6 +167,8 @@ export default function CharacterGame4() {
         y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
       };
       setPos({ ...posRef.current });
+    } else {
+      setDir("front");
     }
 
     const _cw = cwRef.current, _ch = chRef.current;
@@ -233,7 +235,7 @@ export default function CharacterGame4() {
         style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors">← 返回地圖</Link>
         <span className="text-gray-600">|</span>
-        <span className="text-white font-bold">🦁 智能動物園</span>
+        <span className="text-white font-bold">🛒 智能超市</span>
         <div className="ml-auto flex items-center gap-2 px-3 py-1 text-xs"
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)" }}>
           <span style={{ color: GREEN }}>▶</span>
@@ -272,8 +274,7 @@ export default function CharacterGame4() {
           style={{ left: MIA_POS.x * cw, top: MIA_POS.y * ch, width: NPC_SIZE_PCT * ch, zIndex: 5, cursor: "pointer" }}
           onClick={() => { if (activeDialogRef.current) { advanceDialog(); return; } openMiaDialog(); }}>
           <img src={img("/img/Mia.png")} alt="米亞" draggable={false}
-            style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated",
-                     filter: nearMia ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated" }} />
           {(!miaDialogDone || (ch4Complete && !miaAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -361,7 +362,7 @@ export default function CharacterGame4() {
                            imageRendering: "pixelated", display: "block" }} />
                 <div className="w-full text-center px-4 py-1 text-xs font-bold"
                   style={{ background: "#052e16", border: `2px solid ${GREEN}`, color: "#86efac" }}>
-                  🦁 動物管理員米亞
+                  🛒 超市店長米亞
                 </div>
               </div>
               <div className="w-full px-8 py-6 relative dialog-panel"

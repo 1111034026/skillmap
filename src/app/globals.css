@@ -111,6 +111,17 @@ button:active:not(:disabled) {
   padding-bottom: clamp(10px, 1.5vh, 24px) !important;
 }
 
+/* 兒童風地圖頁：跳出全站像素風重置（圓角字體可正常顯示） */
+.skillmap-ui, .skillmap-ui * {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Baloo 2', sans-serif !important;
+}
+.skillmap-ui img { image-rendering: auto !important; }
+.skillmap-ui .rounded-full { border-radius: 9999px !important; }
+.skillmap-ui .rounded-2xl  { border-radius: 1rem !important; }
+.skillmap-ui .rounded-lg   { border-radius: 0.5rem !important; }
+.skillmap-ui * { transition-timing-function: ease !important; }
+.skillmap-ui button:active:not(:disabled) { transform: scale(0.95) !important; }
+
 @keyframes blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }

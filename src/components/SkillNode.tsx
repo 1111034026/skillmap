@@ -2,9 +2,16 @@
 
 import { Skill, SkillState } from "@/types";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/data/skills";
+import { img } from "@/lib/imgPath";
 
-const NODE_W = 90;
-const NODE_H = 80;
+const NODE_SIZE = 250;
+
+const CHAPTER_IMG: Record<string, string> = {
+  "chapter-1": "1.png",
+  "chapter-2": "2.png",
+  "chapter-3": "3.png",
+  "chapter-4": "4.png",
+};
 
 interface Props {
   skill: Skill;
@@ -16,11 +23,6 @@ interface Props {
 export default function SkillNode({ skill, state, isSelected, onClick }: Props) {
   const isLocked = state === "locked";
   const isCompleted = state === "completed";
-  const isAvailable = state === "available";
-
-  const borderColor = isLocked ? "#e8550033" : isSelected ? "#ffaa44" : "#e85500";
-  const glowColor   = isLocked ? "none"       : isSelected ? "0 0 16px #ffaa44, 0 0 4px #ffaa44" : "0 0 10px #e8550066";
-  const textColor   = isLocked ? "#e8550044"  : isSelected ? "#ffaa44" : "#e85500";
 
   return (
     <div
@@ -36,45 +38,41 @@ export default function SkillNode({ skill, state, isSelected, onClick }: Props) 
         onPointerDown={isLocked ? undefined : () => { new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/select.mp3`).play().catch(() => {}); }}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className="relative flex flex-col items-center justify-center gap-1 transition-all duration-150 select-none font-mono"
+        className="relative transition-all duration-150 select-none"
         style={{
-          width: NODE_W,
-          height: NODE_H,
-          background: isSelected ? "#1a0a00" : "#0e0a06",
-          border: `2px solid ${borderColor}`,
-          boxShadow: glowColor,
+          width: NODE_SIZE,
+          height: NODE_SIZE,
           cursor: isLocked ? "not-allowed" : "pointer",
-          transform: isSelected ? "scale(1.08)" : "scale(1)",
+          transform: isSelected ? "scale(1.1)" : "scale(1)",
+          filter: isSelected ? "drop-shadow(0 0 10px #ffaa44)" : "none",
         }}
         onMouseEnter={e => { if (!isLocked && !isSelected) (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)"; }}
         onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
       >
-        {/* Corner decorations */}
-        <span style={{ position: "absolute", top: 3, left: 4, fontSize: 8, color: borderColor, lineHeight: 1 }}>◤</span>
-        <span style={{ position: "absolute", top: 3, right: 4, fontSize: 8, color: borderColor, lineHeight: 1 }}>◥</span>
+        <img
+          src={img(`/img/${CHAPTER_IMG[skill.id]}`)}
+          alt={skill.title}
+          draggable={false}
+          className="w-full h-full object-contain"
+          style={{ filter: isLocked ? "grayscale(1) brightness(0.6)" : "none", imageRendering: "auto" }}
+        />
 
-        {/* Icon */}
-        <span
-          className="text-2xl leading-none"
-          style={{ filter: isLocked ? "grayscale(1) opacity(0.3)" : "none" }}
-        >
-          {isCompleted ? "✓" : isLocked ? "▣" : skill.icon}
-        </span>
+        {/* Locked overlay */}
+        {isLocked && (
+          <span className="absolute inset-0 flex items-center justify-center text-3xl"
+            style={{ textShadow: "0 0 6px #000" }}>
+            🔒
+          </span>
+        )}
 
-        {/* Status text */}
-        <span className="text-xs tracking-widest" style={{ color: textColor, fontSize: 11 }}>
-          {isCompleted ? "完成" : isLocked ? "鎖定" : "進入"}
-        </span>
-
-        {/* Available ping */}
-        {isAvailable && !isSelected && (
-          <span
-            className="absolute inset-0 animate-ping"
-            style={{ background: "#e8550011", animationDuration: "2.5s" }}
-          />
+        {/* Completed badge */}
+        {isCompleted && (
+          <span className="absolute top-1 right-1 flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold"
+            style={{ background: "#22c55e", color: "#fff", border: "2px solid #fff", boxShadow: "0 0 6px rgba(0,0,0,0.3)" }}>
+            ✓
+          </span>
         )}
       </button>
-
     </div>
   );
 }

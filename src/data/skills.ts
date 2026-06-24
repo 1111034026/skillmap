@@ -15,7 +15,7 @@ export const skills: Skill[] = [
     detail:
       "核心學習：AI 給的結果不一定都對，要先看一看、想一想，再判斷能不能用。",
     x: 160,
-    y: 160,
+    y: 190,
     prerequisites: [],
     icon: "◎",
   },
@@ -26,7 +26,7 @@ export const skills: Skill[] = [
     detail:
       "核心學習：AI 可以幫你想點子，但最後怎麼做，還是要由你自己決定。",
     x: 510,
-    y: 80,
+    y: 130,
     prerequisites: ["chapter-1"],
     icon: "◆",
   },
@@ -37,18 +37,18 @@ export const skills: Skill[] = [
     detail:
       "核心學習：不是每件事都要交給 AI，要先想一想哪些事適合 AI 幫忙。",
     x: 890,
-    y: 240,
+    y: 190,
     prerequisites: ["chapter-2"],
     icon: "◉",
   },
   {
     id: "chapter-4",
-    title: "智能動物園",
+    title: "智能超市",
     description: "Designing with AI",
     detail:
       "核心學習：AI 不是自己懂，是照你給它看的例子來學的。",
     x: 1240,
-    y: 120,
+    y: 150,
     prerequisites: ["chapter-3"],
     icon: "◇",
   },

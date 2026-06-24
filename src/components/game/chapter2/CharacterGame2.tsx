@@ -10,8 +10,8 @@ import { img } from "@/lib/imgPath";
 type Direction = "front" | "back" | "left" | "right";
 
 // White screen area within the 800px-wide stage image
-const SCREEN_LEFT = 175;
-const SCREEN_TOP  = 100;
+const SCREEN_LEFT = 184;
+const SCREEN_TOP  = 220;
 const SCREEN_W    = 445;
 const SCREEN_H    = 248;
 
@@ -28,7 +28,7 @@ const CHAR_SIZE_PCT = 210 / 810;
 const NPC_SIZE_PCT  = 330 / 810;
 const INTERACT_DIST_PCT = 420 / 810;
 const WALK_BOUNDS = { minX: 0, minY: 300 / 810, maxY: 580 / 810 };
-const DM_POS = { x: 250 / 1440, y: 300 / 810, width: 260 / 1440 }; // design machine
+const DM_POS = { x: 250 / 1440, y: 300 / 810, width: 200 / 1440 }; // design machine
 
 const GREEN  = "#16a34a";
 const BRIGHT = "#4ade80";
@@ -175,6 +175,8 @@ export default function CharacterGame2() {
         y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
       };
       setPos({ ...posRef.current });
+    } else {
+      setDir("front");
     }
 
     const cw = cwRef.current;
@@ -295,7 +297,7 @@ export default function CharacterGame2() {
 
         {/* Stage */}
         <img src={img("/img/stage.png")} alt="舞台" draggable={false}
-          style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: (50 / 810) * ch, width: (500 / 1440) * cw, height: "auto",
+          style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: (10 / 810) * ch, width: (500 / 1440) * cw, height: "auto",
                    imageRendering: "pixelated", zIndex: 4 }} />
 
         {/* Design Machine */}
@@ -322,8 +324,7 @@ export default function CharacterGame2() {
             openLumiDialog();
           }}>
           <img src={img("/img/Lumi..png")} alt="露米" draggable={false}
-            style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated",
-                     filter: nearLumi ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated" }} />
           {(!lumiDialogDone || (ch2Complete && !lumiAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -475,7 +476,7 @@ function StageArtwork({ data, cw, ch }: { data: ArtworkData; cw: number; ch: num
   const stageW   = (500 / 1440) * cw;
   const stageH   = stageW * (STAGE_IMG_H / STAGE_IMG_W);
   const stageLeft = (cw - stageW) / 2;
-  const stageTop  = (50 / 810) * ch;
+  const stageTop  = (10 / 810) * ch;
 
   const screenLeft   = stageLeft + SL_FRAC * stageW;
   const screenTop    = stageTop  + ST_FRAC * stageH;

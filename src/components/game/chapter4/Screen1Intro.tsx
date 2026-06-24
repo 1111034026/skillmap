@@ -8,9 +8,9 @@ const GREEN = "#22c55e";
 const BG    = "#041208";
 
 const LINES_A = [
-  "歡迎來到智能動物園，我是管理員米亞。",
+  "歡迎來到智能超市，我是店長米亞。",
   "這裡有一台新的食物分類機。以後我們想請它幫忙分食物。",
-  "豬吃蘋果，猴子吃香蕉。",
+  "蘋果要裝一箱，香蕉要裝一箱，方便上架。",
   "可是現在它還不太會分，常常把食物都猜成同一種。",
   "你願意和我一起教它嗎？",
 ];
@@ -61,7 +61,7 @@ export default function Screen1Intro({ onDone }: Props) {
 
       <div className="flex items-center justify-between px-5 py-3 flex-shrink-0"
         style={{ borderBottom: `2px solid ${GREEN}`, background: "rgba(0,0,0,0.6)" }}>
-        <span className="text-xs tracking-widest" style={{ color: GREEN }}>▶ SMART ZOO // 開場</span>
+        <span className="text-xs tracking-widest" style={{ color: GREEN }}>▶ SMART MART // 開場</span>
         <span className="text-xs" style={{ color: `${GREEN}66` }}>按 E 繼續</span>
       </div>
 

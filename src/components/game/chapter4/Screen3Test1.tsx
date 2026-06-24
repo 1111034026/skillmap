@@ -112,7 +112,7 @@ export default function Screen3Test1({ onDone }: { onDone: () => void }) {
 
       <div className="flex items-center justify-between px-5 py-3 flex-shrink-0"
         style={{ borderBottom: `2px solid ${GREEN}`, background: "rgba(0,0,0,0.6)" }}>
-        <span className="text-xs tracking-widest" style={{ color: GREEN }}>▶ SMART ZOO // 任務 2：看它怎麼猜</span>
+        <span className="text-xs tracking-widest" style={{ color: GREEN }}>▶ SMART MART // 任務 2：看它怎麼猜</span>
         {phase !== "intro" && (
           <span className="text-xs font-bold px-3 py-1"
             style={{ color: GREEN, border: `1px solid ${GREEN}`, background: `${GREEN}11`, letterSpacing: "0.15em" }}>
@@ -123,9 +123,9 @@ export default function Screen3Test1({ onDone }: { onDone: () => void }) {
 
       <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8" style={{ position: "relative" }}>
         {phase === "intro" && (
-          <img src={img("/img/Classification robot.png")} alt="" draggable={false}
-            style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)",
-                     width: 280, height: "auto", imageRendering: "pixelated", pointerEvents: "none" }} />
+          <img src={img("/img/Classification robotgame.png")} alt="" draggable={false}
+            style={{ position: "absolute", left: "50%", top: "44%", transform: "translate(-50%, -50%)",
+                     width: 220, height: "auto", imageRendering: "pixelated", pointerEvents: "none" }} />
         )}
         {phase !== "intro" && (
           <>

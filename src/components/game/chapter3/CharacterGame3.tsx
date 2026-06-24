@@ -11,7 +11,8 @@ type Direction = "front" | "back" | "left" | "right";
 
 const SPEED = 4;
 const CHAR_SIZE_PCT = 210 / 810;
-const NPC_SIZE_PCT  = 365 / 810;
+const WORKER_SIZE_PCT = 300 / 810;
+const NPC_SIZE_PCT  = 300 / 810;
 const INTERACT_DIST_PCT = 420 / 810;
 const WALK_BOUNDS = { minX: 0, minY: 350 / 810, maxY: 500/ 810 };
 
@@ -19,7 +20,7 @@ const ORANGE = "#f97316";
 const BRIGHT  = "#fb923c";
 
 // Task board (輸送帶) position
-const BOARD_POS = { x: 800 / 1440, y: 500 / 810, width: 500 / 1440 };
+const BOARD_POS = { x: 800 / 1440, y: 425 / 810, width: 450 / 1440 };
 
 // Tok NPC position
 const TOK = {
@@ -47,10 +48,10 @@ export default function CharacterGame3() {
   const [cw, setCw] = useState(1440);
   const [ch, setCh] = useState(810);
 
-  const [pos,    setPos]    = useState({ x: 180 / 1440, y: 420 / 810 });
+  const [pos,    setPos]    = useState({ x: 180 / 1440, y: 500 / 810 });
   const [dir,    setDir]    = useState<Direction>("front");
   const [moving, setMoving] = useState(false);
-  const posRef = useRef({ x: 180 / 1440, y: 420 / 810 });
+  const posRef = useRef({ x: 180 / 1440, y: 500 / 810 });
 
   const [tokDialogDone,  setTokDialogDone]  = useState(false);
   const [ch3Complete,    setCh3Complete]    = useState(false);
@@ -163,6 +164,8 @@ export default function CharacterGame3() {
         y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
       };
       setPos({ ...posRef.current });
+    } else {
+      setDir("front");
     }
 
     const cw = cwRef.current;
@@ -299,8 +302,7 @@ export default function CharacterGame3() {
                    cursor: tokDialogDone && !ch3Complete ? "pointer" : "default" }}
           onClick={() => { if (nearBoardRef.current && tokDialogDoneRef.current && !ch3CompleteRef.current) setMissionReady(true); }}>
           <img src={img("/img/conveyor.png")} alt="輸送帶" draggable={false}
-            style={{ width: "100%", height: "auto", imageRendering: "pixelated",
-                     filter: nearBoard ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: "100%", height: "auto", imageRendering: "pixelated" }} />
           {tokDialogDone && !ch3Complete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -315,13 +317,13 @@ export default function CharacterGame3() {
 
         {/* AIrobot near conveyor */}
         <img src={img("/img/AIrobot.png")} alt="AI機器人" draggable={false}
-          style={{ position: "absolute", left: (BOARD_POS.x - 0.015) * cw, top: (BOARD_POS.y - 0.15) * ch,
-                   width: "auto", height: CHAR_SIZE_PCT * ch, imageRendering: "pixelated", zIndex: 3, pointerEvents: "none" }} />
+          style={{ position: "absolute", left: (BOARD_POS.x + 0.01) * cw, top: (BOARD_POS.y - 0.05) * ch,
+                   width: "auto", height: WORKER_SIZE_PCT * ch, imageRendering: "pixelated", zIndex: 3, pointerEvents: "none" }} />
 
         {/* Worker near conveyor */}
         <img src={img("/img/Worker.png")} alt="機械工坊工人" draggable={false}
-          style={{ position: "absolute", left: (BOARD_POS.x + BOARD_POS.width - 0.23) * cw, top: (BOARD_POS.y - 0.15) * ch,
-                   width: "auto", height: CHAR_SIZE_PCT * ch, imageRendering: "pixelated", zIndex: 3, pointerEvents: "none" }} />
+          style={{ position: "absolute", left: (BOARD_POS.x + BOARD_POS.width - 0.2) * cw, top: (BOARD_POS.y - 0.05) * ch,
+                   width: "auto", height: WORKER_SIZE_PCT * ch, imageRendering: "pixelated", zIndex: 3, pointerEvents: "none" }} />
 
         {/* Tok NPC */}
         <div className="absolute"
@@ -331,8 +333,7 @@ export default function CharacterGame3() {
             openTokDialog();
           }}>
           <img src={img("/img/Tucker.png")} alt="托克" draggable={false}
-            style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated",
-                     filter: nearTok ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: NPC_SIZE_PCT * ch, height: "auto", imageRendering: "pixelated" }} />
           {(!tokDialogDone || (ch3Complete && !tokAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>

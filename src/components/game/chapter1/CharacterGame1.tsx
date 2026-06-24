@@ -11,24 +11,26 @@ type Direction = "front" | "back" | "left" | "right";
 
 const SPEED = 4;
 const CHAR_SIZE_PCT = 210 / 810;
-const NPC_SIZE_PCT  = 220 / 810;
+const NPC_SIZE_PCT  = 270 / 810;
 const INTERACT_DIST_PCT = 420 / 810;
 
-const WALK_BOUNDS = { minX: 0, minY: 300 / 810, maxY: 395 / 810 };
+const WALK_BOUNDS = { minX: 0, minY: 350 / 810, maxY: 445 / 810 };
 
-const BOARD = { x: 100 / 1440, y: 180 / 810, w: 360 / 1440, h: 315 / 810 };
+const SCENE_SHIFT_PCT = 60 / 1440; // shift all foreground scene elements left
+
+const BOARD = { x: 100 / 1440, y: 230 / 810, w: 360 / 1440, h: 315 / 810 };
 
 // right-anchored CSS positions (fractions of container)
-const MW_POS    = { right: 300 / 1440, top: 300 / 810, width: 250 / 1440 };
-const CLS_POS   = { right: 30 / 1440,  top: 290 / 810, width: 200 / 1440 };
+const MW_POS    = { right: 300 / 1440, top: 300 / 810, width: 240 / 1440 };
+const CLS_POS   = { right: 30 / 1440,  top: 330 / 810, width: 200 / 1440 };
 
 // Decorative scene assets (fractions of container)
-const BOAT_POS    = { left: 250 / 1440, top: 0 / 810,  width: 500 / 1440 };
-const SHOP_POS    = { left: 500 / 1440, top: 150 / 810, width: 500 / 1440 };
+const BOAT_POS    = { left: 350 / 1440, top: 80 / 810,  width: 250 / 1440 };
+const SHOP_POS    = { left: 560 / 1440, top: 60 / 810, width: 420 / 1440 };
 const FACTORY_POS = { right: 20 / 1440, top: 40 / 810,  width: 400 / 1440 };
 
 const NPC = {
-  x: 420 / 1440, y: 300 / 810,
+  x: 360 / 1440, y: 300 / 810,
   dialog: [
     "你來得正好！我是這座港口的船長阿波。",
     "最近港口的 AI 推薦板好像怪怪的，常常給出奇怪的建議。",
@@ -254,6 +256,8 @@ export default function CharacterGame() {
         y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
       };
       setPos({ ...posRef.current });
+    } else {
+      setDir("front");
     }
 
     // Proximity — every frame, using posRef (always current)
@@ -426,14 +430,16 @@ export default function CharacterGame() {
 
         <WasdHint />
 
+        {/* Foreground scene elements (shifted left as a group) */}
+        <div className="absolute" style={{ inset: 0, transform: `translateX(-${SCENE_SHIFT_PCT * cw}px)` }}>
+
         {/* Classifier */}
         <div className="absolute"
           style={{ right: CLS_POS.right * cw, top: CLS_POS.top * ch, width: CLS_POS.width * cw, zIndex: 4,
                    cursor: mwDialogDone && !clsTaskDone ? "pointer" : "default" }}
           onClick={() => { if (mwDialogDone && !clsTaskDone) setClassifierReady(true); }}>
           <img src={img("/img/Classifier.png")} alt="分類器" draggable={false}
-            style={{ width: "100%", height: "auto", imageRendering: "pixelated",
-                     filter: nearClassifier && mwDialogDone && !clsTaskDone ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: "100%", height: "auto", imageRendering: "pixelated" }} />
           {mwDialogDone && !clsTaskDone && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -468,8 +474,7 @@ export default function CharacterGame() {
             openMwDialog();
           }}>
           <img src={img("/img/Maintenance worker.png")} alt="維修工阿修" draggable={false}
-            style={{ width: "100%", height: "auto", imageRendering: "pixelated",
-                     filter: nearMW && ((npcAfterDone && !mwDialogDone) || (clsTaskDone && !clsAfterDone)) ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: "100%", height: "auto", imageRendering: "pixelated" }} />
           {((npcAfterDone && !mwDialogDone) || (clsTaskDone && !clsAfterDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -493,8 +498,7 @@ export default function CharacterGame() {
           style={{ left: BOARD.x * cw, top: BOARD.y * ch, width: BOARD.w * cw, height: BOARD.h * ch, zIndex: 5, cursor: "pointer" }}
           onClick={() => { if (npcDialogDone && !missionComplete) setMissionReady(true); }}>
           <img src={img("/img/bulletin_board.png")} alt="公告板" draggable={false}
-            style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated",
-                     filter: nearBoard ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated" }} />
           {npcDialogDone && !missionComplete && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -513,8 +517,7 @@ export default function CharacterGame() {
                    cursor: "pointer" }}
           onClick={() => { if (activeDialogRef.current === "npc") advanceDialog(); else openNpcDialog(); }}>
           <img src={img("/img/NPC1.png")} alt="NPC" draggable={false}
-            style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated",
-                     filter: nearNpc ? "brightness(1.3)" : "brightness(1)", transition: "filter 0.3s" }} />
+            style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated" }} />
           {(!npcDialogDone || (missionComplete && !npcAfterDone) || (clsAfterDone && !finalDone)) && (
             <div className="absolute left-1/2 -translate-x-1/2 -top-10 text-3xl font-black animate-bounce"
               style={{ color: "#ef4444", textShadow: "0 0 12px #ef4444, 0 0 24px #b91c1c", pointerEvents: "none", lineHeight: 1 }}>！</div>
@@ -532,6 +535,8 @@ export default function CharacterGame() {
           style={{ position: "absolute", left: pos.x * cw, top: pos.y * ch, width: "auto", height: CHAR_SIZE_PCT * ch,
                    imageRendering: "pixelated", zIndex: 10,
                    filter: moving ? "brightness(1.1)" : "brightness(1)", transition: "filter 0.1s" }} />
+
+        </div>
 
         {/* Dialog box */}
         {activeDialog !== null && (

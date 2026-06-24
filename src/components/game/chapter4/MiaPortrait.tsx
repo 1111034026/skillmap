@@ -14,7 +14,7 @@ export function MiaPortrait() {
                  imageRendering: "pixelated", display: "block" }} />
       <div className="w-full text-center px-4 py-1 text-xs font-bold"
         style={{ background: "#052e16", border: `2px solid ${GREEN}`, color: "#86efac" }}>
-        🦁 動物管理員米亞
+        🛒 超市店長米亞
       </div>
     </div>
   );

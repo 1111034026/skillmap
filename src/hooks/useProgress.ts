@@ -9,7 +9,6 @@ const STORAGE_KEY = "skillmap-progress";
 
 export function useProgress() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
@@ -26,7 +25,6 @@ export function useProgress() {
     } catch {
       // ignore
     }
-    setLoaded(true);
   }, []);
 
   const saveCompleted = useCallback((next: Set<string>) => {
@@ -39,11 +37,10 @@ export function useProgress() {
 
   const getSkillState = useCallback(
     (skillId: string): SkillState => {
-      if (!loaded) return "locked";
       if (completed.has(skillId)) return "completed";
       return "available";
     },
-    [completed, loaded]
+    [completed]
   );
 
   const markCompleted = useCallback(

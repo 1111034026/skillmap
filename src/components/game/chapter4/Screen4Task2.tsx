@@ -98,7 +98,7 @@ export default function Screen4Task2({ onDone }: Props) {
 
       <div className="flex items-center justify-between px-5 py-3 flex-shrink-0"
         style={{ borderBottom: `2px solid ${GREEN}`, background: "rgba(0,0,0,0.6)" }}>
-        <span className="text-xs tracking-widest" style={{ color: GREEN }}>▶ SMART ZOO // 任務 3：教它認得香蕉</span>
+        <span className="text-xs tracking-widest" style={{ color: GREEN }}>▶ SMART MART // 任務 3：教它認得香蕉</span>
         {phase === "train" && (
           <span className="text-xs font-bold px-3 py-1"
             style={{ color: GREEN, border: `1px solid ${GREEN}`, background: `${GREEN}11`, letterSpacing: "0.15em" }}>
@@ -168,20 +168,20 @@ export default function Screen4Task2({ onDone }: Props) {
             onDragLeave={() => setHovering(false)}
             onDrop={e => { e.preventDefault(); setHovering(false); handleDrop(); }}
             style={{
-              position: "relative", cursor: "default", transition: "all 0.2s",
+              position: "relative", cursor: "default", transition: "all 0.2s", marginTop: -10,
               filter: hovering ? `brightness(1.3) drop-shadow(0 0 12px ${GREEN})` : isDone ? `drop-shadow(0 0 8px ${GREEN})` : "brightness(1)",
               transform: hovering ? "scale(1.05)" : "scale(1)",
             }}>
-            <img src={img("/img/Classification robot.png")} alt="食物分類機" draggable={false}
-              style={{ width: 280, height: "auto", imageRendering: "pixelated", display: "block" }} />
+            <img src={img("/img/Classification robotgame.png")} alt="食物分類機" draggable={false}
+              style={{ width: 220, height: "auto", imageRendering: "pixelated", display: "block" }} />
           </div>
         </div>
       )}
 
       {phase === "intro" && (
-        <div className="flex-1 flex items-center justify-center">
-          <img src={img("/img/Classification robot.png")} alt="" draggable={false}
-            style={{ width: 280, height: "auto", imageRendering: "pixelated" }} />
+        <div className="flex-1 flex items-center justify-center" style={{ marginTop: -10 }}>
+          <img src={img("/img/Classification robotgame.png")} alt="" draggable={false}
+            style={{ width: 220, height: "auto", imageRendering: "pixelated" }} />
         </div>
       )}
 

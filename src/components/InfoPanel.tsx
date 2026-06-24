@@ -33,12 +33,11 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
   if (!skill || !state) {
     return (
       <div
-        className="flex flex-col items-center justify-center gap-2 h-full font-mono"
-        style={{ borderTop: "2px solid #e8550033" }}
+        className="flex flex-col items-center justify-center gap-2 h-full"
       >
-        <span className="text-2xl" style={{ opacity: 0.3 }}>▷</span>
-        <p className="text-sm tracking-widest" style={{ color: "#e8550055" }}>
-          點選關卡節點以查看詳情
+        <span className="text-3xl" style={{ opacity: 0.5 }}>🧭</span>
+        <p className="text-sm" style={{ color: "#4a3826" }}>
+          點選地圖上的節點查看關卡介紹
         </p>
       </div>
     );
@@ -46,7 +45,8 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
 
   const isLocked = state === "locked";
   const isCompleted = state === "completed";
-  const orange = "#e85500";
+  const gold = "#f4b942";
+  const green = "#8bc78e";
 
   const bgImg = skill.id === "chapter-4" ? img("/img/BK4.png")
               : skill.id === "chapter-3" ? img("/img/BK3.png")
@@ -54,29 +54,27 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
               : img("/img/BK1.png");
 
   return (
-    <div className="h-full font-mono relative overflow-hidden" style={{ borderTop: `2px solid ${orange}55` }}>
+    <div className="h-full relative overflow-hidden" style={{ background: "#eaf6fb" }}>
       {/* 背景圖 */}
-      <img src={bgImg} alt="" className="absolute inset-0 w-full h-full object-cover"
-        style={{ imageRendering: "pixelated", opacity: 0.18 }} />
-      {/* 內容疊在背景上 */}
-      <div className="relative h-full flex flex-col px-10 py-5 gap-4"
-        style={{ border: `2px solid ${orange}44`, borderTop: "none" }}>
+      <img src={bgImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0" style={{ background: "rgba(255,250,240,0.6)" }} />
+      <div className="relative h-full flex flex-col px-10 py-3 gap-2">
         {/* Header */}
         <div>
-          <div className="text-base tracking-widest mb-0.5" style={{ color: `${orange}66` }}>
-            關卡資訊 ////
+          <div className="text-base font-bold mb-0.5" style={{ color: "#4a3826" }}>
+            關卡介紹
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-2xl font-bold tracking-widest" style={{ color: orange, textShadow: `0 0 8px ${orange}` }}>
+            <div className="text-3xl font-bold" style={{ color: "#5b4632" }}>
               {skill.title}
             </div>
             {(isCompleted || isLocked) && (
               <span
-                className="text-sm tracking-widest px-2 py-0.5"
+                className="text-base font-bold px-3 py-0.5 rounded-full"
                 style={{
-                  border: `1px solid ${isCompleted ? "#22c55e" : orange + "44"}`,
-                  color: isCompleted ? "#22c55e" : `${orange}55`,
-                  background: isCompleted ? "#0a1a0a" : "#0e0800",
+                  border: `1px solid ${isCompleted ? green : "#d8cdbb"}`,
+                  color: isCompleted ? "#3f7a43" : "#4a3826",
+                  background: isCompleted ? "#eaf6e9" : "#f1ece1",
                 }}
               >
                 {isCompleted ? "已完成" : "尚未解鎖"}
@@ -87,16 +85,16 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
 
         {/* Description */}
         <div className="flex flex-col gap-1">
-          <p className="text-base tracking-wide leading-relaxed" style={{ color: "#ffffff" }}>
+          <p className="text-lg leading-snug font-bold" style={{ color: "#5b4632" }}>
             {skill.description}
           </p>
-          <p className="text-base leading-relaxed" style={{ color: "#cccccc", whiteSpace: "pre-line" }}>
+          <p className="text-lg leading-snug font-bold" style={{ color: "#4a3826", whiteSpace: "pre-line" }}>
             {skill.detail}
           </p>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-3 mt-auto">
+        <div className="flex items-center justify-end gap-3 mt-auto">
           <button
             disabled={isLocked}
             onPointerDown={() => {
@@ -115,12 +113,12 @@ export default function InfoPanel({ skill, state, onComplete }: Props) {
                 navigate(route);
               }
             }}
-            className="px-6 py-2 text-sm font-bold tracking-widest transition-all hover:brightness-125 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 text-lg font-bold rounded-full transition-all hover:brightness-95 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
-              background: isLocked ? "#1a0800" : orange,
-              border: `2px solid ${isLocked ? orange + "33" : orange}`,
-              color: isLocked ? `${orange}55` : "#000",
-              boxShadow: isLocked ? "none" : `0 0 12px ${orange}88`,
+              background: isLocked ? "#f1ece1" : gold,
+              border: "3px solid #fff",
+              color: isLocked ? "#4a3826" : "#5b4632",
+              boxShadow: isLocked ? "0 0 0 2px #d8cdbb" : "0 0 0 2px #f08a3c, 0 3px 8px rgba(244,185,66,0.5)",
             }}
           >
             {isLocked ? "尚未解鎖" : "進入關卡 →"}
