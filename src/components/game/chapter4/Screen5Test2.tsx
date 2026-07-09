@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
-import { TEST_ITEMS } from "@/data/chapter4";
+import { TEST_ITEMS, nodeText } from "@/data/chapter4";
 import { MiaPortrait } from "./MiaPortrait";
 import { img } from "@/lib/imgPath";
 
@@ -69,6 +69,7 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
   const { ready } = useDialogReady(
     `${phase}-${introIdx}-${itemIdx}-${feedbackIdx}`,
     phase === "intro" || phase === "feedback",
+    audioRef,
   );
 
   const advance = () => {
@@ -89,7 +90,7 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
   }, [phase, introIdx, playVoice]);
 
   useEffect(() => {
-    if (phase === "feedback") playVoice(item.mia2[feedbackIdx]);
+    if (phase === "feedback") playVoice(nodeText(item.mia2[feedbackIdx]));
   }, [phase, itemIdx, feedbackIdx, playVoice]);
 
   useEffect(() => {
@@ -210,7 +211,7 @@ export default function Screen5Test2({ onDone }: { onDone: () => void }) {
               <p key={`${phase}-${introIdx}-${itemIdx}`}
                 className="text-white text-lg leading-relaxed dialog-text whitespace-pre-line"
                 style={{ animation: "fadeUp 0.2s ease" }}>
-                {phase === "intro" ? INTRO_LINES[introIdx] : item.mia2[feedbackIdx]}
+                {phase === "intro" ? INTRO_LINES[introIdx] : nodeText(item.mia2[feedbackIdx])}
               </p>
               <span className="text-xs absolute bottom-3 right-4"
                 style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>

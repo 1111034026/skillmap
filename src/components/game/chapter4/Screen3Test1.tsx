@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDialogReady } from "@/hooks/useDialogReady";
-import { TEST_ITEMS } from "@/data/chapter4";
+import { TEST_ITEMS, isQ, nodeText } from "@/data/chapter4";
 import { MiaPortrait } from "./MiaPortrait";
 import { img } from "@/lib/imgPath";
 
@@ -23,6 +23,9 @@ export default function Screen3Test1({ onDone }: { onDone: () => void }) {
   const [feedbackIdx, setFeedbackIdx] = useState(0);
   const [scanning,    setScanning]   = useState(false);
   const [showResult,  setShowResult] = useState(false);
+  const [qPhase,  setQPhase]  = useState<"asking" | "answered">("asking");
+  const [qPicked, setQPicked] = useState<number | null>(null);
+  const qPhaseRef = useRef<"asking" | "answered">("asking");
 
   const item   = TEST_ITEMS[itemIdx];
   const isLast = itemIdx === TEST_ITEMS.length - 1;
@@ -69,16 +72,40 @@ export default function Screen3Test1({ onDone }: { onDone: () => void }) {
   const { ready } = useDialogReady(
     `${phase}-${introIdx}-${itemIdx}-${feedbackIdx}`,
     phase === "intro" || phase === "feedback",
+    audioRef,
   );
 
+  const handleChoicePick = (idx: number) => {
+    if (qPhaseRef.current !== "asking") return;
+    const current = item.mia1[feedbackIdx];
+    if (!isQ(current)) return;
+    const correct = idx === current.correct;
+    setQPicked(idx);
+    qPhaseRef.current = "answered";
+    setQPhase("answered");
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    if (audioRef.current) audioRef.current.pause();
+    const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-4gamevoice/${encodeURIComponent(correct ? current.tokCorrect : current.tokWrong)}.mp3`);
+    audioRef.current = a;
+    a.play().catch(() => {});
+  };
+
   const advance = () => {
+    if (phase === "feedback") {
+      const current = item.mia1[feedbackIdx];
+      if (isQ(current) && qPhaseRef.current === "asking") return;
+    }
     if (!ready) return;
     if (phase === "intro") {
       if (introIdx < INTRO_LINES.length - 1) { setIntroIdx(introIdx + 1); return; }
       setPhase("reveal"); setScanning(false); setShowResult(false); return;
     }
     if (phase === "feedback") {
-      if (feedbackIdx < item.mia1.length - 1) { setFeedbackIdx(feedbackIdx + 1); return; }
+      if (feedbackIdx < item.mia1.length - 1) {
+        setFeedbackIdx(feedbackIdx + 1);
+        qPhaseRef.current = "asking"; setQPhase("asking"); setQPicked(null);
+        return;
+      }
       if (!isLast) { setItemIdx(prev => prev + 1); setFeedbackIdx(0); setPhase("reveal"); setScanning(false); setShowResult(false); return; }
       onDone();
     }
@@ -89,7 +116,7 @@ export default function Screen3Test1({ onDone }: { onDone: () => void }) {
   }, [phase, introIdx, playVoice]);
 
   useEffect(() => {
-    if (phase === "feedback") playVoice(item.mia1[feedbackIdx]);
+    if (phase === "feedback") playVoice(nodeText(item.mia1[feedbackIdx]));
   }, [phase, itemIdx, feedbackIdx, playVoice]);
 
   useEffect(() => {
@@ -202,29 +229,75 @@ export default function Screen3Test1({ onDone }: { onDone: () => void }) {
         )}
       </div>
 
-      {(phase === "intro" || phase === "feedback") && (
-        <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }} onClick={advance}>
-          <div className="relative max-w-6xl mx-auto" style={{ cursor: "pointer" }}>
-            <MiaPortrait />
-            <div className="w-full px-8 py-6 relative dialog-panel"
-              style={{ background: "rgba(4,18,8,0.97)", borderTop: `3px solid ${GREEN}`, minHeight: 150 }}>
-              <p key={`${phase}-${introIdx}-${itemIdx}`}
-                className="text-white text-lg leading-relaxed dialog-text whitespace-pre-line"
-                style={{ animation: "fadeUp 0.2s ease" }}>
-                {phase === "intro" ? INTRO_LINES[introIdx] : item.mia1[feedbackIdx]}
-              </p>
-              <span className="text-xs absolute bottom-3 right-4"
-                style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
-                {phase === "intro" && introIdx < INTRO_LINES.length - 1
-                  ? "點擊或按 E 繼續 ▶"
-                  : isLast && phase === "feedback"
-                    ? "點擊或按 E 繼續 ▶"
-                    : "點擊或按 E 下一個 ▶"}
-              </span>
+      {(phase === "intro" || phase === "feedback") && (() => {
+        const current = phase === "feedback" ? item.mia1[feedbackIdx] : null;
+        const isQuestion = current !== null && isQ(current);
+        const inAsking = isQuestion && qPhase === "asking";
+        const displayText = phase === "intro"
+          ? INTRO_LINES[introIdx]
+          : isQuestion
+            ? (qPhase === "asking" ? current.question : (qPicked === current.correct ? current.tokCorrect : current.tokWrong))
+            : current as string;
+        return (
+          <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
+            onClick={inAsking ? undefined : advance}>
+            <div className="relative max-w-6xl mx-auto" style={{ cursor: inAsking ? "default" : "pointer" }}>
+              <MiaPortrait />
+              <div className="w-full px-8 py-6 relative dialog-panel"
+                style={{ background: "rgba(4,18,8,0.97)", borderTop: `3px solid ${GREEN}`, minHeight: 150 }}>
+                <p key={`${phase}-${introIdx}-${itemIdx}-${feedbackIdx}`}
+                  className="text-white text-lg leading-relaxed dialog-text whitespace-pre-line"
+                  style={{ animation: "fadeUp 0.2s ease" }}>
+                  {displayText}
+                </p>
+
+                {inAsking && isQuestion && (
+                  <div className="flex flex-col gap-2 mt-4">
+                    {current.choices.map((choice, idx) => (
+                      <button key={idx}
+                        onClick={(e) => { e.stopPropagation(); handleChoicePick(idx); }}
+                        className="text-left px-4 py-2 text-sm font-bold transition-all hover:brightness-110"
+                        style={{ background: `${GREEN}18`, border: `2px solid ${GREEN}44`, color: "#e2e8f0", cursor: "pointer" }}>
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {isQuestion && qPhase === "answered" && (
+                  <div className="flex flex-col gap-2 mt-4">
+                    {current.choices.map((choice, idx) => {
+                      const isCorrect = idx === current.correct;
+                      const isPicked  = idx === qPicked;
+                      return (
+                        <div key={idx} className="px-4 py-2 text-sm font-bold"
+                          style={{
+                            background: isCorrect ? "rgba(34,197,94,0.15)" : isPicked ? "rgba(239,68,68,0.15)" : `${GREEN}08`,
+                            border: `2px solid ${isCorrect ? "#22c55e" : isPicked ? "#ef4444" : `${GREEN}20`}`,
+                            color:   isCorrect ? "#4ade80" : isPicked ? "#f87171" : "#4b5563",
+                          }}>
+                          {choice}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {!inAsking && (
+                  <span className="text-xs absolute bottom-3 right-4"
+                    style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
+                    {phase === "intro" && introIdx < INTRO_LINES.length - 1
+                      ? "點擊或按 E 繼續 ▶"
+                      : isLast && phase === "feedback" && feedbackIdx === item.mia1.length - 1
+                        ? "點擊或按 E 繼續 ▶"
+                        : "點擊或按 E 下一個 ▶"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

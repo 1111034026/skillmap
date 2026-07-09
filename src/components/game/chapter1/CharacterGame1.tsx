@@ -45,15 +45,39 @@ const NPC = {
   ],
 };
 
-const NPC_FINAL_DIALOG = [
+type QuestionNode = {
+  question: string;
+  choices: string[];
+  correct: number;
+  tokCorrect: string;
+  tokWrong: string;
+};
+type DialogNode = string | QuestionNode;
+const isQ = (n: DialogNode): n is QuestionNode => typeof n === "object";
+const nodeText = (n: DialogNode) => isQ(n) ? n.question : n;
+
+const NPC_FINAL_DIALOG: DialogNode[] = [
   "你今天幫了回聲港很大的忙。",
   "你先學會看 AI 給出的結果，再去找出它為什麼會這樣分。",
+  {
+    question: "使用 AI 的建議之前，我們應該怎麼做？",
+    choices: ["直接相信 AI", "先看一看，再想一想"],
+    correct: 1,
+    tokCorrect: "沒錯！AI 很方便，但不是每次都對。要先看一看，再想一想。",
+    tokWrong: "不是喔，AI 很方便，但不是每次都對。要先看一看，再想一想，才能做出好決定。",
+  },
   "現在你知道了，AI 很方便，但不是每次都對。要先看一看，再想一想。",
 ];
 
-const MW_DIALOG_AFTER = [
+const MW_DIALOG_AFTER: DialogNode[] = [
   "機器修好了！原來公告板不是故意亂給結果，而是前面的地點分類學得不夠完整。",
-  "現在你已經學會了 AI 並不是真的「懂」這些地方，它只是從過去學到的資料裡，找出最像的線索來做決定。",
+  {
+    question: "AI 是真的「懂」這些地方嗎？",
+    choices: ["是，AI 真的懂", "不是，它只是找出最像的線索"],
+    correct: 1,
+    tokCorrect: "對！AI 並不是真的「懂」，它只是從過去的資料裡找出最像的線索來做決定。",
+    tokWrong: "不是喔，AI 並沒有真正理解，它只是從過去的資料裡找出最像的線索來做決定。",
+  },
   "只要前面一學錯，後面的結果就容易錯誤。",
   "去和船長阿波報告這件事吧！",
 ];
@@ -77,10 +101,10 @@ export default function CharacterGame() {
   const [ch, setCh] = useState(810);
 
   // Movement
-  const [pos, setPos]     = useState({ x: 150 / 1440, y: 370 / 810 });
+  const [pos, setPos]     = useState({ x: 150 / 1440, y: 420 / 810 });
   const [dir, setDir]     = useState<Direction>("front");
   const [moving, setMoving] = useState(false);
-  const posRef = useRef({ x: 150 / 1440, y: 370 / 810 });
+  const posRef = useRef({ x: 150 / 1440, y: 420 / 810 });
 
   // Quest state (state = render, ref = sync E-key access)
   const [npcDialogDone,  setNpcDialogDone]  = useState(false);
@@ -103,6 +127,10 @@ export default function CharacterGame() {
   const [dialogIndex,  setDialogIndex]  = useState(0);
   const activeDialogRef = useRef<"npc" | "mw" | "mw_after" | null>(null);
   const dialogIndexRef  = useRef(0);
+
+  const [qPhase,  setQPhase]  = useState<"asking" | "answered">("asking");
+  const [qPicked, setQPicked] = useState<number | null>(null);
+  const qPhaseRef = useRef<"asking" | "answered">("asking");
 
   // Overlays
   const [missionReady,    setMissionReady]    = useState(false);
@@ -137,12 +165,12 @@ export default function CharacterGame() {
   const { ready, readyRef } = useDialogReady(
     `${activeDialog ?? ""}-${dialogIndex}`,
     activeDialog !== null,
+    audioRef,
   );
 
   // ── Dialog advance (stable: only refs + stable setters) ───────────────────
 
   const advanceDialog = useCallback(() => {
-    if (!readyRef.current) return;
     const who = activeDialogRef.current;
     if (!who) return;
     const lines = who === "npc"
@@ -150,12 +178,18 @@ export default function CharacterGame() {
          : missionCompleteRef.current ? NPC.dialogAfter
          : NPC.dialog)
       : who === "mw_after" ? MW_DIALOG_AFTER
-      : MW_DIALOG;
+      : MW_DIALOG as DialogNode[];
+    const current = lines[dialogIndexRef.current];
+    if (isQ(current) && qPhaseRef.current === "asking") return;
+    if (!readyRef.current) return;
     const next = dialogIndexRef.current + 1;
     if (next < lines.length) {
       dialogIndexRef.current = next;
       setDialogIndex(next);
-      playVoice(lines[next]);
+      qPhaseRef.current = "asking";
+      setQPhase("asking");
+      setQPicked(null);
+      playVoice(nodeText(lines[next]));
     } else {
       // close dialog
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
@@ -192,6 +226,29 @@ export default function CharacterGame() {
 
   // ── Open dialog helpers ───────────────────────────────────────────────────
 
+  const resetQ = useCallback(() => {
+    qPhaseRef.current = "asking";
+    setQPhase("asking");
+    setQPicked(null);
+  }, []);
+
+  const handleChoicePick = useCallback((idx: number) => {
+    if (qPhaseRef.current !== "asking") return;
+    const who = activeDialogRef.current;
+    if (!who) return;
+    const lines = who === "npc"
+      ? (clsAfterDoneRef.current && !finalDoneRef.current ? NPC_FINAL_DIALOG : NPC_FINAL_DIALOG)
+      : MW_DIALOG_AFTER;
+    const current = lines[dialogIndexRef.current];
+    if (!isQ(current)) return;
+    const correct = idx === current.correct;
+    setQPicked(idx);
+    qPhaseRef.current = "answered";
+    setQPhase("answered");
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    playVoice(correct ? current.tokCorrect : current.tokWrong);
+  }, [playVoice]);
+
   const openNpcDialog = useCallback(() => {
     const canTalk = !npcDialogDoneRef.current ||
       (missionCompleteRef.current && !npcAfterDoneRef.current) ||
@@ -199,61 +256,59 @@ export default function CharacterGame() {
     if (!canTalk || activeDialogRef.current !== null) return;
     activeDialogRef.current = "npc";
     dialogIndexRef.current = 0;
+    resetQ();
     setActiveDialog("npc");
     setDialogIndex(0);
     const lines = clsAfterDoneRef.current && !finalDoneRef.current ? NPC_FINAL_DIALOG
       : missionCompleteRef.current ? NPC.dialogAfter
       : NPC.dialog;
-    playVoice(lines[0]);
-  }, [playVoice]);
+    playVoice(nodeText(lines[0]));
+  }, [playVoice, resetQ]);
 
   const openMwDialog = useCallback(() => {
     if (!npcAfterDoneRef.current || mwDialogDoneRef.current) return;
     if (activeDialogRef.current !== null) return;
     activeDialogRef.current = "mw";
     dialogIndexRef.current = 0;
+    resetQ();
     setActiveDialog("mw");
     setDialogIndex(0);
     playVoice(MW_DIALOG[0]);
-  }, [playVoice]);
+  }, [playVoice, resetQ]);
 
   const openMwAfterDialog = useCallback(() => {
     if (!clsTaskDoneRef.current || clsAfterDoneRef.current) return;
     if (activeDialogRef.current !== null) return;
     activeDialogRef.current = "mw_after";
     dialogIndexRef.current = 0;
+    resetQ();
     setActiveDialog("mw_after");
     setDialogIndex(0);
-    playVoice(MW_DIALOG_AFTER[0]);
-  }, [playVoice]);
+    playVoice(nodeText(MW_DIALOG_AFTER[0]));
+  }, [playVoice, resetQ]);
 
   // ── Game loop ─────────────────────────────────────────────────────────────
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
-    let dx = 0, dy = 0;
-    if (keys.has("ArrowUp")    || keys.has("w") || keys.has("W")) dy -= SPEED;
-    if (keys.has("ArrowDown")  || keys.has("s") || keys.has("S")) dy += SPEED;
+    let dx = 0;
     if (keys.has("ArrowLeft")  || keys.has("a") || keys.has("A")) dx -= SPEED;
     if (keys.has("ArrowRight") || keys.has("d") || keys.has("D")) dx += SPEED;
 
-    const isMoving = dx !== 0 || dy !== 0;
+    const isMoving = dx !== 0;
     setMoving(isMoving);
 
     if (isMoving) {
-      if      (dy < 0) setDir("back");
-      else if (dy > 0) setDir("front");
-      else if (dx < 0) setDir("left");
-      else             setDir("right");
+      if (dx < 0) setDir("left");
+      else        setDir("right");
 
       const _cw = cwRef.current;
       const _ch = chRef.current;
       const dxPct = dx / _cw;
-      const dyPct = dy / _ch;
       const charPx = CHAR_SIZE_PCT * _ch;
       posRef.current = {
         x: Math.max(WALK_BOUNDS.minX, Math.min(1 - charPx / _cw, posRef.current.x + dxPct)),
-        y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
+        y: posRef.current.y,
       };
       setPos({ ...posRef.current });
     } else {
@@ -304,8 +359,8 @@ export default function CharacterGame() {
     if (localStorage.getItem("classifier_complete") === "1") {
       clsTaskDoneRef.current = true; setClsTaskDone(true);
       const spawnX = (1 - CLS_POS.right - CLS_POS.width - CHAR_SIZE_PCT * (810 / 1440) + 60 / 1440);
-      posRef.current = { x: spawnX, y: 150 / 810 };
-      setPos({ x: spawnX, y: 380 / 810 });
+      posRef.current = { x: spawnX, y: 420 / 810 };
+      setPos({ x: spawnX, y: 420 / 810 });
     }
     if (localStorage.getItem("cls_after_done") === "1") {
       clsAfterDoneRef.current = true; setClsAfterDone(true);
@@ -395,7 +450,7 @@ export default function CharacterGame() {
 
   // ── Dialog box renderer ───────────────────────────────────────────────────
 
-  const currentLines = activeDialog === "npc"
+  const currentLines: DialogNode[] = activeDialog === "npc"
     ? (clsAfterDone && !finalDone ? NPC_FINAL_DIALOG
        : missionComplete ? NPC.dialogAfter
        : NPC.dialog)
@@ -539,46 +594,91 @@ export default function CharacterGame() {
         </div>
 
         {/* Dialog box */}
-        {activeDialog !== null && (
-          <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
-            onClick={() => activeDialog === "npc"
-              ? (activeDialogRef.current === "npc" ? advanceDialog() : openNpcDialog())
-              : advanceDialog()}>
-            <div className="relative max-w-6xl mx-auto">
-              {/* Portrait */}
-              <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
-                            pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img
-                  src={activeDialog === "npc" ? img("/img/NPC1half.png") : img("/img/Maintenance workerhalf.png")}
-                  alt={activeDialog === "npc" ? "阿波" : "阿修"}
-                  style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
-                           imageRendering: "pixelated", display: "block" }} />
-                <div className="w-full text-center px-4 py-1 text-xs font-bold"
-                  style={{ background: "#1e3a8a", border: "2px solid #3b82f6", color: "#93c5fd" }}>
-                  {activeDialog === "npc" ? "⚓ 船長阿波" : "🔧 維修工阿修"}
+        {activeDialog !== null && (() => {
+          const current = currentLines[dialogIndex];
+          const isQuestion = isQ(current);
+          const inAsking = isQuestion && qPhase === "asking";
+          const displayText = isQuestion
+            ? (qPhase === "asking" ? current.question : (qPicked === current.correct ? current.tokCorrect : current.tokWrong))
+            : current as string;
+          return (
+            <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
+              onClick={inAsking ? undefined : () => activeDialog === "npc"
+                ? (activeDialogRef.current === "npc" ? advanceDialog() : openNpcDialog())
+                : advanceDialog()}>
+              <div className="relative max-w-6xl mx-auto" style={{ cursor: inAsking ? "default" : "pointer" }}>
+                {/* Portrait */}
+                <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
+                              pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <img
+                    src={activeDialog === "npc" ? img("/img/NPC1half.png") : img("/img/Maintenance workerhalf.png")}
+                    alt={activeDialog === "npc" ? "阿波" : "阿修"}
+                    style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
+                             imageRendering: "pixelated", display: "block" }} />
+                  <div className="w-full text-center px-4 py-1 text-xs font-bold"
+                    style={{ background: "#1e3a8a", border: "2px solid #3b82f6", color: "#93c5fd" }}>
+                    {activeDialog === "npc" ? "⚓ 船長阿波" : "🔧 維修工阿修"}
+                  </div>
                 </div>
-              </div>
-              {/* Text panel */}
-              <div className="w-full px-8 py-6 relative dialog-panel"
-                style={{ background: "rgba(8,20,50,0.97)", borderTop: "3px solid #3b82f6",
-                         boxShadow: "0 -4px 0px #1e3a8a", minHeight: 150 }}>
-                <p className="text-white text-lg leading-relaxed dialog-text">
-                  {currentLines[dialogIndex]}
-                </p>
-                <div className="absolute bottom-3 left-8 flex gap-1">
-                  {currentLines.map((_, i) => (
-                    <span key={i} className="w-2 h-2"
-                      style={{ background: i === dialogIndex ? "#60a5fa" : "rgba(255,255,255,0.2)", display: "inline-block" }} />
-                  ))}
+                {/* Text panel */}
+                <div className="w-full px-8 py-6 relative dialog-panel"
+                  style={{ background: "rgba(8,20,50,0.97)", borderTop: "3px solid #3b82f6",
+                           boxShadow: "0 -4px 0px #1e3a8a", minHeight: 150 }}>
+                  <p className="text-white text-lg leading-relaxed dialog-text">
+                    {displayText}
+                  </p>
+
+                  {/* Choice buttons (asking phase) */}
+                  {inAsking && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => (
+                        <button key={idx}
+                          onClick={(e) => { e.stopPropagation(); handleChoicePick(idx); }}
+                          className="text-left px-4 py-2 text-sm font-bold transition-all hover:brightness-110"
+                          style={{ background: "rgba(59,130,246,0.1)", border: "2px solid rgba(59,130,246,0.4)", color: "#e2e8f0", cursor: "pointer" }}>
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Choice result (answered phase) */}
+                  {isQuestion && qPhase === "answered" && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => {
+                        const isCorrect = idx === current.correct;
+                        const isPicked  = idx === qPicked;
+                        return (
+                          <div key={idx} className="px-4 py-2 text-sm font-bold"
+                            style={{
+                              background: isCorrect ? "rgba(34,197,94,0.15)" : isPicked ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.05)",
+                              border: `2px solid ${isCorrect ? "#22c55e" : isPicked ? "#ef4444" : "rgba(59,130,246,0.2)"}`,
+                              color:   isCorrect ? "#4ade80"  : isPicked ? "#f87171"  : "#4b5563",
+                            }}>
+                            {choice}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-3 left-8 flex gap-1">
+                    {currentLines.map((_, i) => (
+                      <span key={i} className="w-2 h-2"
+                        style={{ background: i === dialogIndex ? "#60a5fa" : "rgba(255,255,255,0.2)", display: "inline-block" }} />
+                    ))}
+                  </div>
+                  {!inAsking && (
+                    <span className="text-xs absolute bottom-3 right-4"
+                      style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
+                      {dialogIndex < currentLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs absolute bottom-3 right-4"
-                  style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
-                  {dialogIndex < currentLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
-                </span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Mission start overlay */}
         {missionReady && !activeDialog && (

@@ -33,6 +33,17 @@ const DM_POS = { x: 250 / 1440, y: 300 / 810, width: 200 / 1440 }; // design mac
 const GREEN  = "#16a34a";
 const BRIGHT = "#4ade80";
 
+type QuestionNode = {
+  question: string;
+  choices: string[];
+  correct: number;
+  tokCorrect: string;
+  tokWrong: string;
+};
+type DialogNode = string | QuestionNode;
+const isQ = (n: DialogNode): n is QuestionNode => typeof n === "object";
+const nodeText = (n: DialogNode) => isQ(n) ? n.question : n;
+
 const LUMI = {
   x: 650 / 1440, y: 400 / 810,
   dialog: [
@@ -41,12 +52,19 @@ const LUMI = {
     "我請 AI 設計機幫忙想點子，結果它一下子給了好多東西。",
     "有些點子很棒，有些點子卻不太適合。",
     "請幫我整理這些點子，把舞台設計完成。",
-  ],
+  ] as DialogNode[],
   dialogAfter: [
     "你完成了屬於自己的舞台佈景！",
     "AI 給了你很多點子，但是最後的作品是你自己選出來的。",
+    {
+      question: "做完作品後，誰該決定最後的樣子？",
+      choices: ["AI 設計機", "是我自己選的"],
+      correct: 1,
+      tokCorrect: "對！AI 可以幫你想點子，但最後要怎麼創作，還是由你決定。",
+      tokWrong: "不是喔，AI 給了你很多點子，但你才是做最後決定的人。",
+    },
     "記住：AI 可以幫你想點子，但最後要怎麼創作，還是由你決定。",
-  ],
+  ] as DialogNode[],
 };
 
 export default function CharacterGame2() {
@@ -72,6 +90,10 @@ export default function CharacterGame2() {
   const [dialogIndex,   setDialogIndex]   = useState(0);
   const activeDialogRef = useRef(false);
   const dialogIndexRef  = useRef(0);
+
+  const [qPhase,  setQPhase]  = useState<"asking" | "answered">("asking");
+  const [qPicked, setQPicked] = useState<number | null>(null);
+  const qPhaseRef = useRef<"asking" | "answered">("asking");
 
   const [artworkData,  setArtworkData]  = useState<ArtworkData | null>(null);
   const [missionReady, setMissionReady] = useState(false);
@@ -102,22 +124,27 @@ export default function CharacterGame2() {
     audio.play().catch(() => {});
   }, []);
 
-  const currentLines = ch2CompleteRef.current && !lumiAfterDoneRef.current
+  const currentLines: DialogNode[] = ch2CompleteRef.current && !lumiAfterDoneRef.current
     ? LUMI.dialogAfter
     : LUMI.dialog;
 
-  const { ready, readyRef } = useDialogReady(dialogIndex, activeDialog);
+  const { ready, readyRef } = useDialogReady(dialogIndex, activeDialog, audioRef);
 
   const advanceDialog = useCallback(() => {
-    if (!readyRef.current) return;
     if (!activeDialogRef.current) return;
     const lines = ch2CompleteRef.current && !lumiAfterDoneRef.current
       ? LUMI.dialogAfter : LUMI.dialog;
+    const current = lines[dialogIndexRef.current];
+    if (isQ(current) && qPhaseRef.current === "asking") return;
+    if (!readyRef.current) return;
     const next = dialogIndexRef.current + 1;
     if (next < lines.length) {
       dialogIndexRef.current = next;
       setDialogIndex(next);
-      playVoice(lines[next]);
+      qPhaseRef.current = "asking";
+      setQPhase("asking");
+      setQPicked(null);
+      playVoice(nodeText(lines[next]));
     } else {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = false;
@@ -137,42 +164,53 @@ export default function CharacterGame2() {
     }
   }, [playVoice]);
 
+  const handleChoicePick = useCallback((idx: number) => {
+    if (qPhaseRef.current !== "asking") return;
+    const lines = LUMI.dialogAfter;
+    const current = lines[dialogIndexRef.current];
+    if (!isQ(current)) return;
+    const correct = idx === current.correct;
+    setQPicked(idx);
+    qPhaseRef.current = "answered";
+    setQPhase("answered");
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    playVoice(correct ? current.tokCorrect : current.tokWrong);
+  }, [playVoice]);
+
   const openLumiDialog = useCallback(() => {
     const canTalk = !lumiDialogDoneRef.current ||
       (ch2CompleteRef.current && !lumiAfterDoneRef.current);
     if (!canTalk || activeDialogRef.current) return;
     activeDialogRef.current = true;
     dialogIndexRef.current = 0;
+    qPhaseRef.current = "asking";
+    setQPhase("asking");
+    setQPicked(null);
     setActiveDialog(true);
     setDialogIndex(0);
     const lines = ch2CompleteRef.current && !lumiAfterDoneRef.current
       ? LUMI.dialogAfter : LUMI.dialog;
-    playVoice(lines[0]);
+    playVoice(nodeText(lines[0]));
   }, [playVoice]);
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
-    let dx = 0, dy = 0;
-    if (keys.has("ArrowUp")    || keys.has("w") || keys.has("W")) dy -= SPEED;
-    if (keys.has("ArrowDown")  || keys.has("s") || keys.has("S")) dy += SPEED;
+    let dx = 0;
     if (keys.has("ArrowLeft")  || keys.has("a") || keys.has("A")) dx -= SPEED;
     if (keys.has("ArrowRight") || keys.has("d") || keys.has("D")) dx += SPEED;
 
-    const isMoving = dx !== 0 || dy !== 0;
+    const isMoving = dx !== 0;
     setMoving(isMoving);
     if (isMoving) {
-      if      (dy < 0) setDir("back");
-      else if (dy > 0) setDir("front");
-      else if (dx < 0) setDir("left");
-      else             setDir("right");
+      if (dx < 0) setDir("left");
+      else        setDir("right");
       const _cw = cwRef.current;
       const _ch = chRef.current;
       const dxPct = dx / _cw;
-      const dyPct = dy / _ch;
       const charPx = CHAR_SIZE_PCT * _ch;
       posRef.current = {
         x: Math.max(WALK_BOUNDS.minX, Math.min(1 - charPx / _cw, posRef.current.x + dxPct)),
-        y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
+        y: posRef.current.y,
       };
       setPos({ ...posRef.current });
     } else {
@@ -199,7 +237,7 @@ export default function CharacterGame2() {
     }
     if (localStorage.getItem("chapter2_complete") === "1") {
       ch2CompleteRef.current = true; setCh2Complete(true);
-      posRef.current = { x: 480 / 1440, y: 380 / 810 }; setPos({ x: 480 / 1440, y: 380 / 810 });
+      posRef.current = { x: 480 / 1440, y: 530 / 810 }; setPos({ x: 480 / 1440, y: 530 / 810 });
     }
     if (localStorage.getItem("lumi_after_done") === "1") {
       lumiAfterDoneRef.current = true; setLumiAfterDone(true);
@@ -261,7 +299,7 @@ export default function CharacterGame2() {
     : lumiDialogDone                ? "前往 AI 設計機開始任務"
     :                                 "去找發明家露米說話";
 
-  const dialogLines = ch2Complete && !lumiAfterDone ? LUMI.dialogAfter : LUMI.dialog;
+  const dialogLines: DialogNode[] = ch2Complete && !lumiAfterDone ? LUMI.dialogAfter : LUMI.dialog;
 
   return (
     <div className="flex flex-col h-svh" style={{ background: "#0a1a0a" }}>
@@ -393,42 +431,87 @@ export default function CharacterGame2() {
         )}
 
         {/* Dialog box */}
-        {activeDialog && (
-          <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
-            onClick={advanceDialog}>
-            <div className="relative max-w-6xl mx-auto">
-              {/* Portrait */}
-              <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
-                            pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img src={img("/img/Lumihalf.png")} alt="露米"
-                  style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
-                           imageRendering: "pixelated", display: "block" }} />
-                <div className="w-full text-center px-4 py-1 text-xs font-bold"
-                  style={{ background: "#052010", border: `2px solid ${GREEN}`, color: BRIGHT }}>
-                  🌿發明家露米
+        {activeDialog && (() => {
+          const current = dialogLines[dialogIndex];
+          const isQuestion = isQ(current);
+          const inAsking = isQuestion && qPhase === "asking";
+          const displayText = isQuestion
+            ? (qPhase === "asking" ? current.question : (qPicked === current.correct ? current.tokCorrect : current.tokWrong))
+            : current as string;
+          return (
+            <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
+              onClick={inAsking ? undefined : advanceDialog}>
+              <div className="relative max-w-6xl mx-auto" style={{ cursor: inAsking ? "default" : "pointer" }}>
+                {/* Portrait */}
+                <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
+                              pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <img src={img("/img/Lumihalf.png")} alt="露米"
+                    style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
+                             imageRendering: "pixelated", display: "block" }} />
+                  <div className="w-full text-center px-4 py-1 text-xs font-bold"
+                    style={{ background: "#052010", border: `2px solid ${GREEN}`, color: BRIGHT }}>
+                    🌿發明家露米
+                  </div>
                 </div>
-              </div>
-              {/* Text panel */}
-              <div className="w-full px-8 py-6 relative dialog-panel"
-                style={{ background: "rgba(5,32,16,0.97)", borderTop: `3px solid ${GREEN}`,
-                         boxShadow: `0 -4px 0px #052010`, minHeight: 150 }}>
-                <p className="text-white text-lg leading-relaxed dialog-text">
-                  {dialogLines[dialogIndex]}
-                </p>
-                <div className="absolute bottom-3 left-8 flex gap-1">
-                  {dialogLines.map((_, i) => (
-                    <span key={i} className="w-2 h-2"
-                      style={{ background: i === dialogIndex ? BRIGHT : "rgba(255,255,255,0.2)", display: "inline-block" }} />
-                  ))}
+                {/* Text panel */}
+                <div className="w-full px-8 py-6 relative dialog-panel"
+                  style={{ background: "rgba(5,32,16,0.97)", borderTop: `3px solid ${GREEN}`,
+                           boxShadow: `0 -4px 0px #052010`, minHeight: 150 }}>
+                  <p className="text-white text-lg leading-relaxed dialog-text">
+                    {displayText}
+                  </p>
+
+                  {/* Choice buttons (asking phase) */}
+                  {inAsking && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => (
+                        <button key={idx}
+                          onClick={(e) => { e.stopPropagation(); handleChoicePick(idx); }}
+                          className="text-left px-4 py-2 text-sm font-bold transition-all hover:brightness-110"
+                          style={{ background: `${GREEN}11`, border: `2px solid ${GREEN}44`, color: "#e2e8f0", cursor: "pointer" }}>
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Choice result (answered phase) */}
+                  {isQuestion && qPhase === "answered" && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => {
+                        const isCorrect = idx === current.correct;
+                        const isPicked  = idx === qPicked;
+                        return (
+                          <div key={idx} className="px-4 py-2 text-sm font-bold"
+                            style={{
+                              background: isCorrect ? "rgba(34,197,94,0.15)" : isPicked ? "rgba(239,68,68,0.15)" : `${GREEN}06`,
+                              border: `2px solid ${isCorrect ? "#22c55e" : isPicked ? "#ef4444" : `${GREEN}22`}`,
+                              color:   isCorrect ? "#4ade80"  : isPicked ? "#f87171"  : "#4b5563",
+                            }}>
+                            {choice}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-3 left-8 flex gap-1">
+                    {dialogLines.map((_, i) => (
+                      <span key={i} className="w-2 h-2"
+                        style={{ background: i === dialogIndex ? BRIGHT : "rgba(255,255,255,0.2)", display: "inline-block" }} />
+                    ))}
+                  </div>
+                  {!inAsking && (
+                    <span className="text-xs absolute bottom-3 right-4"
+                      style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
+                      {dialogIndex < dialogLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs absolute bottom-3 right-4"
-                  style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
-                  {dialogIndex < dialogLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
-                </span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Keyboard hint */}

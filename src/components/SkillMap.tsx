@@ -86,15 +86,15 @@ export default function SkillMap() {
             position: "relative", width: "100%", height: "100%", overflow: "hidden",
             border: `2px solid ${GOLD}`, boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
           }}>
+            <img src={img("/img/mapBK.png")} alt="" draggable={false}
+              className="absolute inset-0 w-full h-full"
+              style={{ objectFit: "cover", pointerEvents: "none" }} />
             {/* 固定邏輯尺寸的地圖內容，用 transform scale 等比縮放 */}
             <div style={{
               position: "absolute", top: 0, left: "50%",
               width: CANVAS_WIDTH, height: CANVAS_HEIGHT,
               transform: `translateX(-50%) scale(${scale})`, transformOrigin: "top center",
             }}>
-              <img src={img("/img/mapBK.png")} alt="" draggable={false}
-                className="absolute inset-0 w-full h-full"
-                style={{ objectFit: "cover", pointerEvents: "none" }} />
               <SkillPath getSkillState={getSkillState} />
               {skills.map(skill => (
                 <SkillNode

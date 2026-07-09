@@ -27,6 +27,7 @@ export default function ClassifierGame() {
   const [qIndex, setQIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("game");
   const [voiceDone, setVoiceDone] = useState(false);
+  const [feedbackVoiceDone, setFeedbackVoiceDone] = useState(false);
 
   const shuffle = (q: typeof CLASSIFIER_QUESTIONS[0]) =>
     q.options.map((text, i) => ({ text, originalIndex: i })).sort(() => Math.random() - 0.5);
@@ -50,6 +51,32 @@ export default function ClassifierGame() {
     audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
     return () => { cancelled = true; audio.pause(); };
   }, [qIndex]);
+
+  // 播放答對/答錯回饋音，播完才能繼續
+  useEffect(() => {
+    if (screen !== "correct" && screen !== "wrong") return;
+    setFeedbackVoiceDone(false);
+    let cancelled = false;
+    const text = screen === "correct" ? q.correctFeedback : q.wrongFeedback;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent(text)}.mp3`);
+    const done = () => { if (!cancelled) setFeedbackVoiceDone(true); };
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, qIndex]);
+
+  // 播放完成畫面音，播完才能繼續
+  useEffect(() => {
+    if (screen !== "complete") return;
+    setFeedbackVoiceDone(false);
+    let cancelled = false;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent("你搞懂了。AI 並不是真的「懂」這些地方，它只是從過去學到的資料裡，找出最像的線索來做決定。")}.mp3`);
+    const done = () => { if (!cancelled) setFeedbackVoiceDone(true); };
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  }, [screen]);
 
   const total = CLASSIFIER_QUESTIONS.length;
   const q = CLASSIFIER_QUESTIONS[qIndex];
@@ -100,8 +127,15 @@ export default function ClassifierGame() {
           <p className="text-sm font-bold tracking-widest" style={{ color: GREEN }}>[ 答對了 ]</p>
         </div>
 
-        <button onClick={handleNext} className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
-          style={{ background: "rgba(0,255,136,0.1)", border: `2px solid ${GREEN}`, boxShadow: `4px 4px 0px rgba(0,255,136,0.4)`, color: GREEN }}>
+        <button onClick={feedbackVoiceDone ? handleNext : undefined}
+          className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
+          style={{
+            background: feedbackVoiceDone ? "rgba(0,255,136,0.1)" : "rgba(255,255,255,0.03)",
+            border: `2px solid ${feedbackVoiceDone ? GREEN : "rgba(0,255,136,0.2)"}`,
+            boxShadow: feedbackVoiceDone ? `4px 4px 0px rgba(0,255,136,0.4)` : "none",
+            color: feedbackVoiceDone ? GREEN : "rgba(0,255,136,0.25)",
+            cursor: feedbackVoiceDone ? "pointer" : "default",
+          }}>
           {isLast ? "▶ 完成任務" : "▶ 下一題"}
         </button>
 
@@ -140,8 +174,15 @@ export default function ClassifierGame() {
           <p className="text-sm font-bold tracking-widest" style={{ color: RED }}>[ 再想想 ]</p>
         </div>
 
-        <button onClick={handleRetry} className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
-          style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${BLUE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: BLUE }}>
+        <button onClick={feedbackVoiceDone ? handleRetry : undefined}
+          className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
+          style={{
+            background: feedbackVoiceDone ? "rgba(0,170,255,0.12)" : "rgba(255,255,255,0.03)",
+            border: `2px solid ${feedbackVoiceDone ? BLUE : "rgba(0,170,255,0.2)"}`,
+            boxShadow: feedbackVoiceDone ? `4px 4px 0px rgba(0,170,255,0.4)` : "none",
+            color: feedbackVoiceDone ? BLUE : "rgba(0,170,255,0.25)",
+            cursor: feedbackVoiceDone ? "pointer" : "default",
+          }}>
           ▶ 重新作答
         </button>
 
@@ -182,15 +223,21 @@ export default function ClassifierGame() {
         </div>
 
         <button
-          onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); }}
-          onClick={() => {
+          onPointerDown={feedbackVoiceDone ? () => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); } : undefined}
+          onClick={feedbackVoiceDone ? () => {
             localStorage.setItem("classifier_complete", "1");
             const a = enterAudioRef.current;
             if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1"); }
             else { navigate("/level/chapter-1"); }
-          }}
+          } : undefined}
           className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
-          style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${BLUE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: BLUE }}>
+          style={{
+            background: feedbackVoiceDone ? "rgba(0,170,255,0.12)" : "rgba(255,255,255,0.03)",
+            border: `2px solid ${feedbackVoiceDone ? BLUE : "rgba(0,170,255,0.2)"}`,
+            boxShadow: feedbackVoiceDone ? `4px 4px 0px rgba(0,170,255,0.4)` : "none",
+            color: feedbackVoiceDone ? BLUE : "rgba(0,170,255,0.25)",
+            cursor: feedbackVoiceDone ? "pointer" : "default",
+          }}>
           ▶ 回到回聲港
         </button>
 
@@ -271,9 +318,9 @@ export default function ClassifierGame() {
           <p className="text-base font-bold" style={{ color: BLUE }}>{q.question}</p>
         </div>
 
-        {/* Options */}
+        {/* Options — 題目配音結束才顯示 */}
         <div className="w-full max-w-3xl flex flex-col gap-2">
-          {shuffledOptions.map((opt, i) => (
+          {voiceDone && shuffledOptions.map((opt, i) => (
             <button key={opt.originalIndex}
               onClick={() => handleSelect(opt.originalIndex)}
               className="w-full px-5 py-4 text-left text-sm font-medium tracking-wide transition-all hover:brightness-125"

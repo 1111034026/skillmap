@@ -54,7 +54,7 @@ export default function Screen2Task1({ onDone }: Props) {
     }
   };
 
-  const { ready } = useDialogReady(msg ?? "", msg !== null);
+  const { ready } = useDialogReady(msg ?? "", msg !== null, audioRef);
 
   const advance = () => {
     if (msg !== null && !ready) return;

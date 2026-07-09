@@ -81,8 +81,8 @@ export default function Screen1Theme({ onSelect }: Props) {
     return () => { if (idleTimer.current) clearTimeout(idleTimer.current); };
   }, [phase]);
 
-  const { ready: introReady } = useDialogReady(introIdx, phase === "intro");
-  const { ready: afterReady } = useDialogReady(afterIdx, phase === "after");
+  const { ready: introReady } = useDialogReady(introIdx, phase === "intro", audioRef);
+  const { ready: afterReady } = useDialogReady(afterIdx, phase === "after", audioRef);
 
   const advanceIntro = () => {
     if (!introReady) return;

@@ -57,8 +57,8 @@ export default function Screen4Task2({ onDone }: Props) {
     }
   };
 
-  const { ready: introReady } = useDialogReady(introIdx, phase === "intro");
-  const { ready: trainReady } = useDialogReady(msg ?? "", phase === "train" && msg !== null);
+  const { ready: introReady } = useDialogReady(introIdx, phase === "intro", audioRef);
+  const { ready: trainReady } = useDialogReady(msg ?? "", phase === "train" && msg !== null, audioRef);
 
   const advanceIntro = () => {
     if (!introReady) return;

@@ -206,7 +206,7 @@ export default function Screen2Elements({ theme, elementType, showTaskIntro, isL
 
   // E key advances Lumi dialogs; MachineOverlay handles its own E key
   const isMachinePhase = phase === "machine-give" || phase === "machine-swap";
-  const { ready } = useDialogReady(`${phase}-${idx}`, !isMachinePhase && phase !== "show");
+  const { ready } = useDialogReady(`${phase}-${idx}`, !isMachinePhase && phase !== "show", audioRef);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "e" && e.key !== "E") return;

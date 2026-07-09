@@ -118,8 +118,8 @@ export default function Screen3Stage({ theme, background, character, prop, onDon
   const dragOffset   = useRef({ x: 0, y: 0 });
 
   // ── Intro dialog ──────────────────────────────────────────────────────────
-  const { ready: introReady }  = useDialogReady(introIdx, !introDone);
-  const { ready: lumiReady }   = useDialogReady(doneLumiIdx, donePhase === "lumi");
+  const { ready: introReady }  = useDialogReady(introIdx, !introDone, audioRef);
+  const { ready: lumiReady }   = useDialogReady(doneLumiIdx, donePhase === "lumi", audioRef);
 
   const advanceIntro = () => {
     if (!introReady) return;

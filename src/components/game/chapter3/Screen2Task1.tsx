@@ -7,38 +7,52 @@ import { img } from "@/lib/imgPath";
 import { TokPortrait } from "./Screen1Intro";
 
 const ORANGE = "#f97316";
-const BRIGHT = "#fb923c";
 const BG = "#0c0f1a";
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const TOK_DONE = "很好，你已經開始看懂哪些事情適合請 AI 幫忙了。";
 
-type Phase = "card" | "feedback" | "alldone";
+const AI_REASONS    = TASK1_CARDS.filter(c => c.answer === "ai").map(c => c.reason);
+const HUMAN_REASONS = TASK1_CARDS.filter(c => c.answer === "human").map(c => c.reason);
+
+type Phase = "card" | "reason" | "feedback" | "alldone";
 
 interface Props { onDone: () => void; }
 
 export default function Screen2Task1({ onDone }: Props) {
   const [cards, setCards] = useState(TASK1_CARDS);
   useEffect(() => { setCards([...TASK1_CARDS].sort(() => Math.random() - 0.5)); }, []);
-  const [cardIdx, setCardIdx]   = useState(0);
-  const [phase,   setPhase]     = useState<Phase>("card");
-  const [dropped, setDropped]   = useState<"ai" | "human" | null>(null);
-  const [hoverId, setHoverId]   = useState<string | null>(null);
-  const draggingRef = useRef(false);
+  const [cardIdx, setCardIdx]     = useState(0);
+  const [phase,   setPhase]       = useState<Phase>("card");
+  const [dropped, setDropped]     = useState<"ai" | "human" | null>(null);
+  const [hoverId, setHoverId]     = useState<string | null>(null);
+  const [reasonPicked, setReasonPicked]   = useState<string | null>(null);
+  const [reasonOptions, setReasonOptions] = useState<string[]>([]);
+  const draggingRef    = useRef(false);
   const audioRef       = useRef<HTMLAudioElement | null>(null);
   const prevCardIdRef  = useRef<string | null>(null);
 
   const card      = cards[cardIdx];
   const isCorrect = dropped === card?.answer;
   const isLast    = cardIdx === cards.length - 1;
-  const { ready } = useDialogReady(`${phase}-${cardIdx}`, phase !== "card");
+  const { ready } = useDialogReady(`${phase}-${cardIdx}`, phase === "feedback" || phase === "alldone", audioRef);
+
+  // Build shuffled reason options when entering reason phase
+  useEffect(() => {
+    if (phase !== "reason" || !card) return;
+    const oppositePool = card.answer === "ai" ? HUMAN_REASONS : AI_REASONS;
+    const two = [...oppositePool].sort(() => Math.random() - 0.5).slice(0, 2);
+    setReasonOptions([...two, card.reason].sort(() => Math.random() - 0.5));
+    setReasonPicked(null);
+  }, [phase, card?.id]);
 
   useEffect(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (phase === "reason") return;
     let line: string;
     if (phase === "card") {
-      if (prevCardIdRef.current === card?.id) return; // 答錯重試，不重播
+      if (prevCardIdRef.current === card?.id) return;
       prevCardIdRef.current = card?.id ?? null;
-      const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       const conveyor = new Audio(`${BASE}/Voice/chapter-3gamevoice/conveyor%20belt.mp3`);
       audioRef.current = conveyor;
       conveyor.play().catch(() => {});
@@ -54,7 +68,7 @@ export default function Screen2Task1({ onDone }: Props) {
     } else {
       line = isCorrect ? card.tokCorrect : card.tokWrong;
     }
-    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-3gamevoice/${encodeURIComponent(line)}.mp3`);
+    const audio = new Audio(`${BASE}/Voice/chapter-3gamevoice/${encodeURIComponent(line)}.mp3`);
     audioRef.current = audio;
     audio.play().catch(() => {});
     return () => { audio.pause(); };
@@ -64,15 +78,29 @@ export default function Screen2Task1({ onDone }: Props) {
   const handleDrop = (zone: "ai" | "human") => {
     if (phase !== "card") return;
     const correct = zone === card?.answer;
-    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/put in.mp3`).play().catch(() => {});
+    new Audio(`${BASE}/Voice/sound effects/put in.mp3`).play().catch(() => {});
     setTimeout(() => {
-      new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+      new Audio(`${BASE}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
     }, 300);
     setDropped(zone);
-    setPhase("feedback");
+    setPhase(correct ? "reason" : "feedback");
+  };
+
+  const handleReasonPick = (reason: string) => {
+    if (reasonPicked) return;
+    setReasonPicked(reason);
+    const correct = reason === card.reason;
+    new Audio(`${BASE}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    if (correct) {
+      setTimeout(() => setPhase("feedback"), 700);
+    } else {
+      // show red highlight briefly, then reset so player can retry
+      setTimeout(() => setReasonPicked(null), 900);
+    }
   };
 
   const advance = () => {
+    if (phase === "reason") return;
     if (!ready) return;
     if (phase === "alldone") { onDone(); return; }
     if (!isCorrect) {
@@ -91,7 +119,7 @@ export default function Screen2Task1({ onDone }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === "e" || e.key === "E") && phase !== "card") advance();
+      if ((e.key === "e" || e.key === "E") && phase !== "card" && phase !== "reason") advance();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -108,6 +136,7 @@ export default function Screen2Task1({ onDone }: Props) {
       <style>{`
         @keyframes slideIn { from { opacity:0; transform:translate(calc(-50% + 300px), -50%); } to { opacity:1; transform:translate(-50%, -50%); } }
         @keyframes fadeUp  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
       `}</style>
 
       {/* Top bar */}
@@ -132,7 +161,7 @@ export default function Screen2Task1({ onDone }: Props) {
           {/* Task card sitting on conveyor */}
           <div key={card.id}
             draggable={phase === "card"}
-            onDragStart={(e) => { draggingRef.current = true; e.dataTransfer.effectAllowed = "move"; new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/drag.mp3`).play().catch(() => {}); }}
+            onDragStart={(e) => { draggingRef.current = true; e.dataTransfer.effectAllowed = "move"; new Audio(`${BASE}/Voice/sound effects/drag.mp3`).play().catch(() => {}); }}
             onDragEnd={() => { draggingRef.current = false; }}
             style={{
               position: "absolute",
@@ -146,7 +175,9 @@ export default function Screen2Task1({ onDone }: Props) {
             }}>
             <img src={img("/img/chapter3task/card.png")} alt="" draggable={false}
               style={{ width: "100%", display: "block", imageRendering: "pixelated", pointerEvents: "none",
-                filter: phase === "feedback" ? (isCorrect ? "sepia(1) hue-rotate(80deg) saturate(2)" : "sepia(1) hue-rotate(300deg) saturate(3)") : "none",
+                filter: (phase === "feedback" || phase === "reason")
+                  ? (isCorrect ? "sepia(1) hue-rotate(80deg) saturate(2)" : "sepia(1) hue-rotate(300deg) saturate(3)")
+                  : "none",
                 transition: "filter 0.3s" }} />
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 6, padding: "16px 28px" }}>
@@ -157,10 +188,8 @@ export default function Screen2Task1({ onDone }: Props) {
               {phase === "card" && (
                 <p className="text-xs tracking-widest" style={{ color: "#7c5c3a" }}>拖曳到下方區域</p>
               )}
-              {phase === "feedback" && (
-                <span className="text-sm font-bold px-2 py-1" style={{
-                  color: isCorrect ? "#14532d" : "#7f1d1d",
-                }}>
+              {(phase === "feedback" || phase === "reason") && (
+                <span className="text-sm font-bold px-2 py-1" style={{ color: isCorrect ? "#14532d" : "#7f1d1d" }}>
                   {isCorrect ? "✓ 正確" : `✕ 正確答案：${card.answer === "ai" ? "AI 機器人" : "機械工坊工人"}`}
                 </span>
               )}
@@ -168,21 +197,63 @@ export default function Screen2Task1({ onDone }: Props) {
           </div>
         </div>
 
-        {/* Drop zones */}
-        <div className="flex gap-6 w-full max-w-2xl">
-          <Zone id="ai" label="AI 機器人" img={img("/img/chapter3task/AIrobot top view.png")} color="#1d4ed8"
-            active={phase === "card"} dropped={dropped === "ai"}
-            hoverId={hoverId} setHoverId={setHoverId}
-            onDrop={() => handleDrop("ai")} />
-          <Zone id="human" label="機械工坊工人" img={img("/img/chapter3task/Worker top view.png")} color="#7c3aed"
-            active={phase === "card"} dropped={dropped === "human"}
-            hoverId={hoverId} setHoverId={setHoverId}
-            onDrop={() => handleDrop("human")} />
-        </div>
+        {/* Reason selection (after correct answer) */}
+        {phase === "reason" && (
+          <div className="flex flex-col items-center gap-3 w-full max-w-2xl" style={{ animation: "fadeIn 0.3s ease" }}>
+            <p className="text-sm tracking-widest font-bold" style={{ color: ORANGE }}>為什麼這件事適合這樣選？</p>
+            <div className="flex flex-col gap-2 w-full">
+              {reasonOptions.map(reason => {
+                const isPicked = reasonPicked === reason;
+                const isReasonCorrect = reason === card.reason;
+                const showResult = reasonPicked !== null;
+                let bg = "rgba(255,255,255,0.05)";
+                let border = `2px solid rgba(255,255,255,0.2)`;
+                let color = "#e2e8f0";
+                if (showResult) {
+                  if (isReasonCorrect) { bg = "rgba(34,197,94,0.15)"; border = "2px solid #22c55e"; color = "#4ade80"; }
+                  else if (isPicked)   { bg = "rgba(239,68,68,0.15)";  border = "2px solid #ef4444"; color = "#f87171"; }
+                }
+                return (
+                  <button
+                    key={reason}
+                    onClick={() => handleReasonPick(reason)}
+                    disabled={reasonPicked !== null}
+                    style={{
+                      background: bg, border, color,
+                      padding: "14px 20px",
+                      textAlign: "left",
+                      fontSize: "1rem",
+                      fontWeight: "bold",
+                      cursor: reasonPicked ? "default" : "pointer",
+                      transition: "all 0.2s",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {reason}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Drop zones (shown during card phase and non-reason phases) */}
+        {phase !== "reason" && (
+          <div className="flex gap-6 w-full max-w-2xl">
+            <Zone id="ai" label="AI 機器人" img={img("/img/chapter3task/AIrobot top view.png")} color="#1d4ed8"
+              active={phase === "card"} dropped={dropped === "ai"}
+              hoverId={hoverId} setHoverId={setHoverId}
+              onDrop={() => handleDrop("ai")} />
+            <Zone id="human" label="機械工坊工人" img={img("/img/chapter3task/Worker top view.png")} color="#7c3aed"
+              active={phase === "card"} dropped={dropped === "human"}
+              hoverId={hoverId} setHoverId={setHoverId}
+              onDrop={() => handleDrop("human")} />
+          </div>
+        )}
       </div>
 
       {/* Tok feedback */}
-      {phase !== "card" && (
+      {(phase === "feedback" || phase === "alldone") && (
         <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }} onClick={advance}>
           <div className="relative max-w-6xl mx-auto" style={{ cursor: "pointer" }}>
             <TokPortrait />

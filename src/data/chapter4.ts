@@ -19,14 +19,19 @@ export const BANANA_CARDS: FoodCard[] = [
 
 export type MachineGuess = "apple" | "banana";
 
+export type QuestionNode = { question: string; choices: string[]; correct: number; tokCorrect: string; tokWrong: string; };
+export type DialogNode = string | QuestionNode;
+export const isQ = (n: DialogNode): n is QuestionNode => typeof n === "object";
+export const nodeText = (n: DialogNode) => isQ(n) ? n.question : n;
+
 export interface TestItem {
   food: FoodCard;
   round1Guess: MachineGuess;
   round2Guess: MachineGuess;
   round1Correct: boolean;
   round2Correct: boolean;
-  mia1: string[];
-  mia2: string[];
+  mia1: DialogNode[];
+  mia2: DialogNode[];
 }
 
 export const TEST_ITEMS: TestItem[] = [
@@ -41,7 +46,17 @@ export const TEST_ITEMS: TestItem[] = [
     food: { id: "test_banana", name: "香蕉", img: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/img/chapter4taskfruit/banana1.png`, type: "banana" },
     round1Guess: "apple", round1Correct: false,
     round2Guess: "banana", round2Correct: true,
-    mia1: ["它把香蕉也分析成蘋果了。不是它故意亂猜，而是它目前只學過蘋果。", "如果你只給它學一種東西，它就只會一直往那一種東西去想。"],
+    mia1: [
+      {
+        question: "你覺得它為什麼會把香蕉分錯呢？",
+        choices: ["它故意亂猜的", "因為它只學過蘋果"],
+        correct: 1,
+        tokCorrect: "對！它不是故意的，只是目前只學過蘋果，所以看到什麼都往蘋果猜。",
+        tokWrong: "不是喔，它不是故意亂猜。是因為它只學過蘋果，所以不知道香蕉是什麼。",
+      },
+      "它把香蕉也分析成蘋果了。不是它故意亂猜，而是它目前只學過蘋果。",
+      "如果你只給它學一種東西，它就只會一直往那一種東西去想。",
+    ],
     mia2: ["你看，它這次也把香蕉分對了。因為你教了它蘋果和香蕉，它就不會再把所有東西都分析成蘋果。"],
   },
 ];

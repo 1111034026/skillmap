@@ -19,6 +19,17 @@ const WALK_BOUNDS = { minX: 0, minY: 350 / 810, maxY: 500/ 810 };
 const ORANGE = "#f97316";
 const BRIGHT  = "#fb923c";
 
+type QuestionNode = {
+  question: string;
+  choices: string[];
+  correct: number;
+  tokCorrect: string;
+  tokWrong: string;
+};
+type DialogNode = string | QuestionNode;
+const isQ = (n: DialogNode): n is QuestionNode => typeof n === "object";
+const nodeText = (n: DialogNode) => isQ(n) ? n.question : n;
+
 // Task board (輸送帶) position
 const BOARD_POS = { x: 800 / 1440, y: 425 / 810, width: 450 / 1440 };
 
@@ -32,14 +43,26 @@ const TOK = {
     "如果什麼都丟給 AI 機器人，有些地方就會出問題。",
     "等等輸送帶會送來任務卡，我需要你幫我一起分派工作。",
     "分派工作前先想想看，這件事比較需要 AI 機器人整理，還是比較需要人來關心和判斷。",
-  ],
+  ] as DialogNode[],
   dialogAfter: [
     "今天你幫了大忙。",
     "你不是只把工作分出去而已，你還學會了怎麼想：什麼事情適合請 AI 幫忙，什麼事情要留給人來做。",
-    "有些事 AI 很拿手，像是整理、統計、檢查。",
-    "但有些事，像是關心別人、做公平判斷、決定真正重要的內容，還是要靠人類來做。",
+    {
+      question: "你覺得 AI 最拿手的是哪一類工作？",
+      choices: ["整理、統計、檢查", "關心別人、做公平判斷"],
+      correct: 0,
+      tokCorrect: "沒錯！有些事 AI 很拿手，像是整理、統計、檢查。",
+      tokWrong: "不是喔，AI 最拿手的是有規則的事，像是整理、統計、檢查。",
+    },
+    {
+      question: "哪些事情還是要靠人類來做？",
+      choices: ["整理、統計、檢查", "關心別人、做公平判斷"],
+      correct: 1,
+      tokCorrect: "對，像是關心別人、做公平判斷，這些還是要靠人類來做。",
+      tokWrong: "不是喔，像是關心別人、做公平判斷，這才是要靠人類來做的事。",
+    },
     "記住喔，會不會用 AI 很重要，但更重要的是知道什麼事情能不能交給 AI 來做。",
-  ],
+  ] as DialogNode[],
 };
 
 export default function CharacterGame3() {
@@ -72,6 +95,10 @@ export default function CharacterGame3() {
   const nearTokRef   = useRef(false);
   const nearBoardRef = useRef(false);
 
+  const [qPhase,  setQPhase]  = useState<"asking" | "answered">("asking");
+  const [qPicked, setQPicked] = useState<number | null>(null);
+  const qPhaseRef = useRef<"asking" | "answered">("asking");
+
   const containerRef = useRef<HTMLDivElement>(null);
   const keysRef      = useRef<Set<string>>(new Set());
   const rafRef       = useRef<number>(0);
@@ -95,18 +122,24 @@ export default function CharacterGame3() {
   const dialogLines = ch3CompleteRef.current && !tokAfterDoneRef.current
     ? TOK.dialogAfter : TOK.dialog;
 
-  const { ready, readyRef } = useDialogReady(dialogIndex, activeDialog);
+  const { ready, readyRef } = useDialogReady(dialogIndex, activeDialog, audioRef);
 
   const advanceDialog = useCallback(() => {
-    if (!readyRef.current) return;
     if (!activeDialogRef.current) return;
     const lines = ch3CompleteRef.current && !tokAfterDoneRef.current
       ? TOK.dialogAfter : TOK.dialog;
+    const current = lines[dialogIndexRef.current];
+    // block advance while question is in asking phase
+    if (isQ(current) && qPhaseRef.current === "asking") return;
+    if (!readyRef.current) return;
     const next = dialogIndexRef.current + 1;
     if (next < lines.length) {
       dialogIndexRef.current = next;
       setDialogIndex(next);
-      playVoice(lines[next]);
+      qPhaseRef.current = "asking";
+      setQPhase("asking");
+      setQPicked(null);
+      playVoice(nodeText(lines[next]));
     } else {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = false;
@@ -126,42 +159,53 @@ export default function CharacterGame3() {
     }
   }, [playVoice]);
 
+  const handleChoicePick = useCallback((idx: number) => {
+    if (qPhaseRef.current !== "asking") return;
+    const lines = TOK.dialogAfter;
+    const current = lines[dialogIndexRef.current];
+    if (!isQ(current)) return;
+    const correct = idx === current.correct;
+    setQPicked(idx);
+    qPhaseRef.current = "answered";
+    setQPhase("answered");
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    playVoice(correct ? current.tokCorrect : current.tokWrong);
+  }, [playVoice]);
+
   const openTokDialog = useCallback(() => {
     const canTalk = !tokDialogDoneRef.current ||
       (ch3CompleteRef.current && !tokAfterDoneRef.current);
     if (!canTalk || activeDialogRef.current) return;
     activeDialogRef.current = true;
     dialogIndexRef.current = 0;
+    qPhaseRef.current = "asking";
+    setQPhase("asking");
+    setQPicked(null);
     setActiveDialog(true);
     setDialogIndex(0);
     const lines = ch3CompleteRef.current && !tokAfterDoneRef.current
       ? TOK.dialogAfter : TOK.dialog;
-    playVoice(lines[0]);
+    playVoice(nodeText(lines[0]));
   }, [playVoice]);
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
-    let dx = 0, dy = 0;
-    if (keys.has("ArrowUp")    || keys.has("w") || keys.has("W")) dy -= SPEED;
-    if (keys.has("ArrowDown")  || keys.has("s") || keys.has("S")) dy += SPEED;
+    let dx = 0;
     if (keys.has("ArrowLeft")  || keys.has("a") || keys.has("A")) dx -= SPEED;
     if (keys.has("ArrowRight") || keys.has("d") || keys.has("D")) dx += SPEED;
 
-    const isMoving = dx !== 0 || dy !== 0;
+    const isMoving = dx !== 0;
     setMoving(isMoving);
     if (isMoving) {
-      if      (dy < 0) setDir("back");
-      else if (dy > 0) setDir("front");
-      else if (dx < 0) setDir("left");
-      else             setDir("right");
+      if (dx < 0) setDir("left");
+      else        setDir("right");
       const _cw = cwRef.current;
       const _ch = chRef.current;
       const dxPct = dx / _cw;
-      const dyPct = dy / _ch;
       const charPx = CHAR_SIZE_PCT * _ch;
       posRef.current = {
         x: Math.max(WALK_BOUNDS.minX, Math.min(1 - charPx / _cw, posRef.current.x + dxPct)),
-        y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
+        y: posRef.current.y,
       };
       setPos({ ...posRef.current });
     } else {
@@ -190,7 +234,7 @@ export default function CharacterGame3() {
     }
     if (localStorage.getItem("chapter3_complete") === "1") {
       ch3CompleteRef.current = true; setCh3Complete(true);
-      posRef.current = { x: 750 / 1440, y: 420 / 810 }; setPos({ x: 750 / 1440, y: 420 / 810 });
+      posRef.current = { x: 750 / 1440, y: 500 / 810 }; setPos({ x: 750 / 1440, y: 500 / 810 });
     }
     if (localStorage.getItem("tok_after_done") === "1") {
       tokAfterDoneRef.current = true; setTokAfterDone(true);
@@ -411,41 +455,87 @@ export default function CharacterGame3() {
         )}
 
         {/* Dialog box */}
-        {activeDialog && (
-          <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }} onClick={advanceDialog}>
-            <div className="relative max-w-6xl mx-auto">
-              {/* Portrait */}
-              <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
-                            pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img src={img("/img/Tuckerhalf.png")} alt="托克"
-                  style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
-                           imageRendering: "pixelated", display: "block" }} />
-                <div className="w-full text-center px-4 py-1 text-xs font-bold"
-                  style={{ background: "#0a0c14", border: `2px solid ${ORANGE}`, color: BRIGHT }}>
-                  ⚙ 工坊隊長托克
+        {activeDialog && (() => {
+          const current = dialogLines[dialogIndex];
+          const isQuestion = isQ(current);
+          const inAsking = isQuestion && qPhase === "asking";
+          const displayText = isQuestion
+            ? (qPhase === "asking" ? current.question : (qPicked === current.correct ? current.tokCorrect : current.tokWrong))
+            : current as string;
+          return (
+            <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
+              onClick={inAsking ? undefined : advanceDialog}>
+              <div className="relative max-w-6xl mx-auto" style={{ cursor: inAsking ? "default" : "pointer" }}>
+                {/* Portrait */}
+                <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
+                              pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <img src={img("/img/Tuckerhalf.png")} alt="托克"
+                    style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
+                             imageRendering: "pixelated", display: "block" }} />
+                  <div className="w-full text-center px-4 py-1 text-xs font-bold"
+                    style={{ background: "#0a0c14", border: `2px solid ${ORANGE}`, color: BRIGHT }}>
+                    ⚙ 工坊隊長托克
+                  </div>
                 </div>
-              </div>
-              {/* Text panel */}
-              <div className="w-full px-8 py-6 relative dialog-panel"
-                style={{ background: "rgba(10,12,20,0.97)", borderTop: `3px solid ${ORANGE}`,
-                         boxShadow: `0 -4px 0px #050708`, minHeight: 150 }}>
-                <p className="text-white text-lg leading-relaxed dialog-text">
-                  {dialogLines[dialogIndex]}
-                </p>
-                <div className="absolute bottom-3 left-8 flex gap-1">
-                  {dialogLines.map((_, i) => (
-                    <span key={i} className="w-2 h-2"
-                      style={{ background: i === dialogIndex ? BRIGHT : "rgba(255,255,255,0.2)", display: "inline-block" }} />
-                  ))}
+                {/* Text panel */}
+                <div className="w-full px-8 py-6 relative dialog-panel"
+                  style={{ background: "rgba(10,12,20,0.97)", borderTop: `3px solid ${ORANGE}`,
+                           boxShadow: `0 -4px 0px #050708`, minHeight: 150 }}>
+                  <p className="text-white text-lg leading-relaxed dialog-text">
+                    {displayText}
+                  </p>
+
+                  {/* Choice buttons (asking phase) */}
+                  {inAsking && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => (
+                        <button key={idx}
+                          onClick={(e) => { e.stopPropagation(); handleChoicePick(idx); }}
+                          className="text-left px-4 py-2 text-sm font-bold transition-all hover:brightness-110"
+                          style={{ background: `${ORANGE}11`, border: `2px solid ${ORANGE}44`, color: "#e2e8f0", cursor: "pointer" }}>
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Choice result (answered phase) */}
+                  {isQuestion && qPhase === "answered" && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => {
+                        const isCorrect = idx === current.correct;
+                        const isPicked  = idx === qPicked;
+                        return (
+                          <div key={idx} className="px-4 py-2 text-sm font-bold"
+                            style={{
+                              background: isCorrect ? "rgba(34,197,94,0.15)" : isPicked ? "rgba(239,68,68,0.15)" : `${ORANGE}06`,
+                              border: `2px solid ${isCorrect ? "#22c55e" : isPicked ? "#ef4444" : `${ORANGE}22`}`,
+                              color:   isCorrect ? "#4ade80"  : isPicked ? "#f87171"  : "#4b5563",
+                            }}>
+                            {choice}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-3 left-8 flex gap-1">
+                    {dialogLines.map((_, i) => (
+                      <span key={i} className="w-2 h-2"
+                        style={{ background: i === dialogIndex ? BRIGHT : "rgba(255,255,255,0.2)", display: "inline-block" }} />
+                    ))}
+                  </div>
+                  {!inAsking && (
+                    <span className="text-xs absolute bottom-3 right-4"
+                      style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
+                      {dialogIndex < dialogLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs absolute bottom-3 right-4"
-                  style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
-                  {dialogIndex < dialogLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
-                </span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Keyboard hint */}

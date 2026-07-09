@@ -28,9 +28,8 @@ export default function Screen1Intro({ onDone }: Props) {
   const [idx,   setIdx]   = useState(0);
 
   const lines = phase === "a" ? LINES_A : LINES_B;
-  const { ready } = useDialogReady(`${phase}-${idx}`);
-
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { ready } = useDialogReady(`${phase}-${idx}`, true, audioRef);
   const playVoice = useCallback((text: string) => {
     if (audioRef.current) audioRef.current.pause();
     const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-4voice/${encodeURIComponent(text)}.mp3`);

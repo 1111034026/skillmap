@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { img } from "@/lib/imgPath";
 
 const ORANGE = "#00AAFF";
@@ -12,6 +13,16 @@ interface Props {
 }
 
 export default function Screen5Wrong({ message, hints, onRetry }: Props) {
+  const [voiceDone, setVoiceDone] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent(message)}.mp3`);
+    const done = () => { if (!cancelled) setVoiceDone(true); };
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="terminal-bg scanlines flex flex-col h-svh items-center justify-center px-4 gap-6 relative"
       style={{ color: "#D0EEFF" }}>
@@ -45,8 +56,15 @@ export default function Screen5Wrong({ message, hints, onRetry }: Props) {
         </div>
       )}
 
-      <button onClick={onRetry} className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
-        style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${ORANGE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: ORANGE }}>
+      <button onClick={voiceDone ? onRetry : undefined}
+        className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
+        style={{
+          background: voiceDone ? "rgba(0,170,255,0.12)" : "rgba(255,255,255,0.03)",
+          border: `2px solid ${voiceDone ? ORANGE : "rgba(0,170,255,0.2)"}`,
+          boxShadow: voiceDone ? `4px 4px 0px rgba(0,170,255,0.4)` : "none",
+          color: voiceDone ? ORANGE : "rgba(0,170,255,0.25)",
+          cursor: voiceDone ? "pointer" : "default",
+        }}>
         ▶ 重新作答
       </button>
 

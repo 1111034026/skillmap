@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState } from "react";
 import { img } from "@/lib/imgPath";
 
 interface Props {
@@ -11,6 +12,16 @@ const ORANGE = "#00AAFF";
 const GREEN = "#00FF88";
 
 export default function Screen4Correct({ message, onNext, isLast }: Props) {
+  const [voiceDone, setVoiceDone] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent(message)}.mp3`);
+    const done = () => { if (!cancelled) setVoiceDone(true); };
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <div className="terminal-bg scanlines flex flex-col h-svh items-center justify-center px-4 gap-6 relative"
       style={{ color: "#D0EEFF" }}>
@@ -31,8 +42,15 @@ export default function Screen4Correct({ message, onNext, isLast }: Props) {
         <p className="text-sm font-bold tracking-widest mb-1" style={{ color: GREEN }}>[ 答對了 ]</p>
       </div>
 
-      <button onClick={onNext} className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
-        style={{ background: "rgba(0,255,136,0.1)", border: `2px solid ${GREEN}`, boxShadow: `4px 4px 0px rgba(0,255,136,0.4)`, color: GREEN }}>
+      <button onClick={voiceDone ? onNext : undefined}
+        className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
+        style={{
+          background: voiceDone ? "rgba(0,255,136,0.1)" : "rgba(255,255,255,0.03)",
+          border: `2px solid ${voiceDone ? GREEN : "rgba(0,255,136,0.2)"}`,
+          boxShadow: voiceDone ? `4px 4px 0px rgba(0,255,136,0.4)` : "none",
+          color: voiceDone ? GREEN : "rgba(0,255,136,0.25)",
+          cursor: voiceDone ? "pointer" : "default",
+        }}>
         {isLast ? "▶ 完成關卡" : "▶ 下一題"}
       </button>
 

@@ -16,11 +16,16 @@ const MIA_POS       = { x: 450 / 1440, y: 330 / 810 };
 const MACHINE_POS   = { x: 840 / 1440, y: 300 / 810, width: 340 / 1440 };
 const NPC_SIZE_PCT  = 300 / 810;
 const CHAR_SIZE_PCT = 210 / 810;
-const WALK_BOUNDS   = { minX: 0, minY: 320 / 810, maxY: 550 / 810 };
+const WALK_BOUNDS   = { minX: 0, maxX: 1280 / 1440, minY: 320 / 810, maxY: 550 / 810 };
 const SPEED         = 4;
 const INTERACT_DIST = 420 / 810;
 
-const MIA_DIALOG: string[] = [
+type QuestionNode = { question: string; choices: string[]; correct: number; tokCorrect: string; tokWrong: string; };
+type DialogNode = string | QuestionNode;
+const isQ = (n: DialogNode): n is QuestionNode => typeof n === "object";
+const nodeText = (n: DialogNode) => isQ(n) ? n.question : n;
+
+const MIA_DIALOG: DialogNode[] = [
   "歡迎來到智能超市，我是店長米亞。",
   "超市來了一台新的食物分類機器人。",
   "我們想請它幫忙分析食物，這樣就可以更快把食物分類上架。",
@@ -28,9 +33,16 @@ const MIA_DIALOG: string[] = [
   "請你幫我一起來訓練它。",
 ];
 
-const MIA_DIALOG_AFTER: string[] = [
+const MIA_DIALOG_AFTER: DialogNode[] = [
   "做得很好。",
   "你先教它認得蘋果，後來又教它認得香蕉。",
+  {
+    question: "機器是怎麼學會分辨蘋果和香蕉的？",
+    choices: ["它自己慢慢懂的", "你一張一張教它，它才學會的"],
+    correct: 1,
+    tokCorrect: "對！機器是靠你教它才學會的，不是自己想出來的。",
+    tokWrong: "不是喔，機器不會自己想，是你一張一張教它，它才學會的。",
+  },
   "記住喔，機器不是自己懂。你怎麼教，它就怎麼學。",
 ];
 
@@ -60,6 +72,10 @@ export default function CharacterGame4() {
   const activeDialogRef = useRef(false);
   const dialogIndexRef  = useRef(0);
 
+  const [qPhase,  setQPhase]  = useState<"asking" | "answered">("asking");
+  const [qPicked, setQPicked] = useState<number | null>(null);
+  const qPhaseRef = useRef<"asking" | "answered">("asking");
+
   const [missionReady, setMissionReady] = useState(false);
   const [finalOverlay, setFinalOverlay] = useState(false);
   const [nearMia,      setNearMia]      = useState(false);
@@ -83,14 +99,14 @@ export default function CharacterGame4() {
     audio.play().catch(() => {});
   }, []);
 
-  const currentLines = ch4CompleteRef.current && !miaAfterDoneRef.current
+  const currentLines: DialogNode[] = ch4CompleteRef.current && !miaAfterDoneRef.current
     ? MIA_DIALOG_AFTER : MIA_DIALOG;
 
   useEffect(() => {
     if (localStorage.getItem("chapter4_complete") === "1") {
       ch4CompleteRef.current = true; setCh4Complete(true);
-      posRef.current = { x: 680 / 1440, y: 410 / 810 };
-      setPos({ x: 680 / 1440, y: 410 / 810 });
+      posRef.current = { x: 680 / 1440, y: 550 / 810 };
+      setPos({ x: 680 / 1440, y: 550 / 810 });
     }
     if (localStorage.getItem("ch4_mia_dialog") === "1") {
       miaDialogDoneRef.current = true; setMiaDialogDone(true);
@@ -110,16 +126,21 @@ export default function CharacterGame4() {
     return () => ro.disconnect();
   }, []);
 
-  const { ready, readyRef } = useDialogReady(dialogIndex, activeDialog);
+  const { ready, readyRef } = useDialogReady(dialogIndex, activeDialog, audioRef);
 
   const advanceDialog = useCallback(() => {
-    if (!readyRef.current) return;
     if (!activeDialogRef.current) return;
-    const lines = ch4CompleteRef.current && !miaAfterDoneRef.current ? MIA_DIALOG_AFTER : MIA_DIALOG;
+    const lines: DialogNode[] = ch4CompleteRef.current && !miaAfterDoneRef.current ? MIA_DIALOG_AFTER : MIA_DIALOG;
+    const current = lines[dialogIndexRef.current];
+    if (isQ(current) && qPhaseRef.current === "asking") return;
+    if (!readyRef.current) return;
     const next = dialogIndexRef.current + 1;
     if (next < lines.length) {
       dialogIndexRef.current = next; setDialogIndex(next);
-      playVoice(lines[next]);
+      qPhaseRef.current = "asking";
+      setQPhase("asking");
+      setQPicked(null);
+      playVoice(nodeText(lines[next]));
     } else {
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       activeDialogRef.current = false; dialogIndexRef.current = 0;
@@ -135,36 +156,53 @@ export default function CharacterGame4() {
     }
   }, [playVoice]);
 
+  const resetQ = useCallback(() => {
+    qPhaseRef.current = "asking";
+    setQPhase("asking");
+    setQPicked(null);
+  }, []);
+
+  const handleChoicePick = useCallback((idx: number) => {
+    if (qPhaseRef.current !== "asking") return;
+    if (!activeDialogRef.current) return;
+    const lines: DialogNode[] = ch4CompleteRef.current && !miaAfterDoneRef.current ? MIA_DIALOG_AFTER : MIA_DIALOG;
+    const current = lines[dialogIndexRef.current];
+    if (!isQ(current)) return;
+    const correct = idx === current.correct;
+    setQPicked(idx);
+    qPhaseRef.current = "answered";
+    setQPhase("answered");
+    new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/${correct ? "correct" : "error"}.mp3`).play().catch(() => {});
+    playVoice(correct ? current.tokCorrect : current.tokWrong);
+  }, [playVoice]);
+
   const openMiaDialog = useCallback(() => {
     const canTalk = !miaDialogDoneRef.current ||
       (ch4CompleteRef.current && !miaAfterDoneRef.current);
     if (!canTalk || activeDialogRef.current) return;
     activeDialogRef.current = true; dialogIndexRef.current = 0;
+    resetQ();
     setActiveDialog(true); setDialogIndex(0);
-    const lines = ch4CompleteRef.current && !miaAfterDoneRef.current ? MIA_DIALOG_AFTER : MIA_DIALOG;
-    playVoice(lines[0]);
-  }, [playVoice]);
+    const lines: DialogNode[] = ch4CompleteRef.current && !miaAfterDoneRef.current ? MIA_DIALOG_AFTER : MIA_DIALOG;
+    playVoice(nodeText(lines[0]));
+  }, [playVoice, resetQ]);
 
   const gameLoop = useCallback(() => {
     const keys = keysRef.current;
-    let dx = 0, dy = 0;
+    let dx = 0;
     if (keys.has("ArrowLeft")  || keys.has("a") || keys.has("A")) dx -= SPEED;
     if (keys.has("ArrowRight") || keys.has("d") || keys.has("D")) dx += SPEED;
-    if (keys.has("ArrowUp")    || keys.has("w") || keys.has("W")) dy -= SPEED;
-    if (keys.has("ArrowDown")  || keys.has("s") || keys.has("S")) dy += SPEED;
 
-    const isMoving = dx !== 0 || dy !== 0;
+    const isMoving = dx !== 0;
     setMoving(isMoving);
     if (isMoving) {
-      if      (dy < 0) setDir("back");
-      else if (dy > 0) setDir("front");
-      else if (dx < 0) setDir("left");
-      else             setDir("right");
-      const _cw = cwRef.current, _ch = chRef.current;
-      const dxPct = dx / _cw, dyPct = dy / _ch;
+      if (dx < 0) setDir("left");
+      else        setDir("right");
+      const _cw = cwRef.current;
+      const dxPct = dx / _cw;
       posRef.current = {
-        x: Math.max(WALK_BOUNDS.minX, Math.min(1, posRef.current.x + dxPct)),
-        y: Math.max(WALK_BOUNDS.minY, Math.min(WALK_BOUNDS.maxY, posRef.current.y + dyPct)),
+        x: Math.max(WALK_BOUNDS.minX, Math.min(WALK_BOUNDS.maxX, posRef.current.x + dxPct)),
+        y: posRef.current.y,
       };
       setPos({ ...posRef.current });
     } else {
@@ -221,7 +259,7 @@ export default function CharacterGame4() {
                     ? "走到食物分類機開始訓練"
     :                 "找米亞說話";
 
-  const dialogLines = ch4Complete && !miaAfterDone ? MIA_DIALOG_AFTER : MIA_DIALOG;
+  const dialogLines: DialogNode[] = ch4Complete && !miaAfterDone ? MIA_DIALOG_AFTER : MIA_DIALOG;
 
   return (
     <div className="flex flex-col h-svh" style={{ background: "#041208", color: "#dcfce7" }}>
@@ -352,39 +390,83 @@ export default function CharacterGame4() {
         )}
 
         {/* Dialog box */}
-        {activeDialog && (
-          <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }} onClick={advanceDialog}>
-            <div className="relative max-w-6xl mx-auto" style={{ cursor: "pointer" }}>
-              <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
-                            pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <img src={img("/img/Miahalf.png")} alt="米亞"
-                  style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
-                           imageRendering: "pixelated", display: "block" }} />
-                <div className="w-full text-center px-4 py-1 text-xs font-bold"
-                  style={{ background: "#052e16", border: `2px solid ${GREEN}`, color: "#86efac" }}>
-                  🛒 超市店長米亞
+        {activeDialog && (() => {
+          const current = currentLines[dialogIndex];
+          const isQuestion = isQ(current);
+          const inAsking = isQuestion && qPhase === "asking";
+          const displayText = isQuestion
+            ? (qPhase === "asking" ? current.question : (qPicked === current.correct ? current.tokCorrect : current.tokWrong))
+            : current as string;
+          return (
+            <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 20 }}
+              onClick={inAsking ? undefined : advanceDialog}>
+              <div className="relative max-w-6xl mx-auto" style={{ cursor: inAsking ? "default" : "pointer" }}>
+                <div style={{ position: "absolute", bottom: "100%", right: "clamp(8px, 2.5vw, 40px)", zIndex: 2,
+                              pointerEvents: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <img src={img("/img/Miahalf.png")} alt="米亞"
+                    style={{ width: "clamp(80px, min(13vw, 18vh), 220px)", height: "clamp(80px, min(13vw, 18vh), 220px)", objectFit: "contain", objectPosition: "bottom",
+                             imageRendering: "pixelated", display: "block" }} />
+                  <div className="w-full text-center px-4 py-1 text-xs font-bold"
+                    style={{ background: "#052e16", border: `2px solid ${GREEN}`, color: "#86efac" }}>
+                    🛒 超市店長米亞
+                  </div>
                 </div>
-              </div>
-              <div className="w-full px-8 py-6 relative dialog-panel"
-                style={{ background: "rgba(4,18,8,0.97)", borderTop: `3px solid ${GREEN}`,
-                         boxShadow: "0 -4px 0px #052e16", minHeight: 150 }}>
-                <p className="text-white text-lg leading-relaxed dialog-text whitespace-pre-line">
-                  {currentLines[dialogIndex]}
-                </p>
-                <div className="absolute bottom-3 left-8 flex gap-1">
-                  {currentLines.map((_, i) => (
-                    <span key={i} className="w-2 h-2"
-                      style={{ background: i === dialogIndex ? BRIGHT : "rgba(255,255,255,0.2)", display: "inline-block" }} />
-                  ))}
+                <div className="w-full px-8 py-6 relative dialog-panel"
+                  style={{ background: "rgba(4,18,8,0.97)", borderTop: `3px solid ${GREEN}`,
+                           boxShadow: "0 -4px 0px #052e16", minHeight: 150 }}>
+                  <p className="text-white text-lg leading-relaxed dialog-text whitespace-pre-line">
+                    {displayText}
+                  </p>
+
+                  {inAsking && isQuestion && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => (
+                        <button key={idx}
+                          onClick={(e) => { e.stopPropagation(); handleChoicePick(idx); }}
+                          className="text-left px-4 py-2 text-sm font-bold transition-all hover:brightness-110"
+                          style={{ background: `${GREEN}18`, border: `2px solid ${GREEN}44`, color: "#e2e8f0", cursor: "pointer" }}>
+                          {choice}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {isQuestion && qPhase === "answered" && (
+                    <div className="flex flex-col gap-2 mt-4">
+                      {current.choices.map((choice, idx) => {
+                        const isCorrect = idx === current.correct;
+                        const isPicked  = idx === qPicked;
+                        return (
+                          <div key={idx} className="px-4 py-2 text-sm font-bold"
+                            style={{
+                              background: isCorrect ? "rgba(34,197,94,0.15)" : isPicked ? "rgba(239,68,68,0.15)" : `${GREEN}08`,
+                              border: `2px solid ${isCorrect ? "#22c55e" : isPicked ? "#ef4444" : `${GREEN}20`}`,
+                              color:   isCorrect ? "#4ade80" : isPicked ? "#f87171" : "#4b5563",
+                            }}>
+                            {choice}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-3 left-8 flex gap-1">
+                    {currentLines.map((_, i) => (
+                      <span key={i} className="w-2 h-2"
+                        style={{ background: i === dialogIndex ? BRIGHT : "rgba(255,255,255,0.2)", display: "inline-block" }} />
+                    ))}
+                  </div>
+                  {!inAsking && (
+                    <span className="text-xs absolute bottom-3 right-4"
+                      style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
+                      {dialogIndex < currentLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs absolute bottom-3 right-4"
-                  style={{ color: ready ? "#9ca3af" : "#1f2937", transition: "color 0.5s" }}>
-                  {dialogIndex < currentLines.length - 1 ? "點擊或按 E 繼續 ▶" : "點擊或按 E 關閉"}
-                </span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Keyboard hint */}

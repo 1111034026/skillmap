@@ -1,6 +1,6 @@
 "use client";
 import { navigate } from "@/lib/navigate";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { img } from "@/lib/imgPath";
 
@@ -13,6 +13,17 @@ const GREEN = "#00FF88";
 
 export default function Screen6Complete({ total }: Props) {
   const enterAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [voiceDone, setVoiceDone] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const text = "你做得很好。AI 給的建議，不是每個都能直接用。有些可以接受，有些還要再判斷，有些就先拒絕。";
+    const audio = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/chapter-1playvoice/${encodeURIComponent(text)}.mp3`);
+    const done = () => { if (!cancelled) setVoiceDone(true); };
+    audio.addEventListener("ended", done);
+    audio.play().catch(err => { if (err?.name !== "AbortError") done(); });
+    return () => { cancelled = true; audio.pause(); };
+  }, []);
 
   return (
     <div className="terminal-bg scanlines flex flex-col h-svh items-center justify-center px-4 gap-6 relative"
@@ -36,15 +47,21 @@ export default function Screen6Complete({ total }: Props) {
       </div>
 
       <button
-        onPointerDown={() => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); }}
-        onClick={() => {
+        onPointerDown={voiceDone ? () => { const a = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/Voice/sound effects/enter.mp3`); enterAudioRef.current = a; a.play().catch(() => {}); } : undefined}
+        onClick={voiceDone ? () => {
           localStorage.setItem("chapter1_complete", "1");
           const a = enterAudioRef.current;
           if (a && !a.ended) { a.onended = () => navigate("/level/chapter-1"); }
           else { navigate("/level/chapter-1"); }
-        }}
+        } : undefined}
         className="w-full max-w-md py-3 font-bold text-sm tracking-widest"
-        style={{ background: "rgba(0,170,255,0.12)", border: `2px solid ${ORANGE}`, boxShadow: `4px 4px 0px rgba(0,170,255,0.4)`, color: ORANGE }}>
+        style={{
+          background: voiceDone ? "rgba(0,170,255,0.12)" : "rgba(255,255,255,0.03)",
+          border: `2px solid ${voiceDone ? ORANGE : "rgba(0,170,255,0.2)"}`,
+          boxShadow: voiceDone ? `4px 4px 0px rgba(0,170,255,0.4)` : "none",
+          color: voiceDone ? ORANGE : "rgba(0,170,255,0.25)",
+          cursor: voiceDone ? "pointer" : "default",
+        }}>
         ▶ 回到回聲港
       </button>
 

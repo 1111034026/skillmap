@@ -4,7 +4,7 @@ import { Skill, SkillState } from "@/types";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/data/skills";
 import { img } from "@/lib/imgPath";
 
-const NODE_SIZE = 250;
+const NODE_SIZE = 180;
 
 const CHAPTER_IMG: Record<string, string> = {
   "chapter-1": "1.png",

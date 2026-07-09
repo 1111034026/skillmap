@@ -58,7 +58,7 @@ export const CLASSIFIER_QUESTIONS: ClassifierQuestion[] = [
   },
   {
     id: "cq4",
-    training: "AI 以前學過的資料裡，很多「靠近海的地方」都被分成「適合看海鷗」。",
+    training: "AI 以前學過的資料裡，很多「看得到海的地方」都被分成「適合看海鷗」。",
     newLocation: "禁止進入區，很靠近海邊，但有危險。",
     aiResult: "適合看海鷗",
     question: "AI 學錯了什麼？",
