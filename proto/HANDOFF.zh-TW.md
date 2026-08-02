@@ -76,7 +76,8 @@ proto/
 
 ## 5. 目前狀態與下一步
 
-**狀態**:A–E 版全部實作完成並驗證。**V.E 四款遊戲齊全**:問《真相偵探社》(手電筒蒐證/證據板/審問室/謠言氣球)、用《螢光音樂祭》(魔藥大鍋/舞台拼裝/鑑定師)、管《瘋狂訂單日》(輸送帶分流/晶片安裝+規則爆炸動畫/超級訂單排序)、造《AI 寶寶養成記》(餵資料→寶寶表情台詞反映資料偏差/配件工坊 dress-up/畢業典禮)。引擎 v4 共 20 種活動型(新增 conveyor/chips/seq/feed/dressup;babyAvatar 狀態機:baby-bot.webp 空白臉+emoji 疊加眼睛/嘴/四個配件槽/對話泡泡)。
+**狀態**:A–F 版全部實作完成並驗證。**V.F 機器人視覺化答題介面**(PO 指定由 subagent 設計):每模組一版,全面改用 ActiveAI 既有 lottie/機器人 SVG——素材集中在 `proto/bot/`(39 個檔+CATALOG.md);引擎 v5:全域機器人反應 dock(idle 待機/correct 慶祝/incorrect 反應,task step 可用 `bot:` 換待機動畫)、所有活動型支援 `lottie:`/`svg:` 媒體欄位、sort2 buckets 帶圖自動變二選一大卡;設計 brief 在 `proto/BRIEF-F.zh-TW.md`。F 版亮點:問=小海出題+O/X 舉牌大卡、用=AI 畫家接單驗收(painting.json)、管=幫手選拔機器人角色卡+規則寶/學習寶對決、造=小灰(classification_model 三件組)上學+配件工坊。
+**狀態**:(前代)A–E  版全部實作完成並驗證。**V.E 四款遊戲齊全**:問《真相偵探社》(手電筒蒐證/證據板/審問室/謠言氣球)、用《螢光音樂祭》(魔藥大鍋/舞台拼裝/鑑定師)、管《瘋狂訂單日》(輸送帶分流/晶片安裝+規則爆炸動畫/超級訂單排序)、造《AI 寶寶養成記》(餵資料→寶寶表情台詞反映資料偏差/配件工坊 dress-up/畢業典禮)。引擎 v4 共 20 種活動型(新增 conveyor/chips/seq/feed/dressup;babyAvatar 狀態機:baby-bot.webp 空白臉+emoji 疊加眼睛/嘴/四個配件槽/對話泡泡)。
 **下一步(等 PO 圈選後執行)** — `PLAN-games-E.zh-TW.md` 末尾 5 個 review 問題:
 1. 四個遊戲類型方向 OK?
 2. 直立切片先做哪款?(建議《AI 寶寶養成記》)

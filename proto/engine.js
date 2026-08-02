@@ -34,6 +34,62 @@ let MOD = null, VER = null, steps = [], stepIdx = 0;
 let lineIdx = 0, choiceMode = false;
 let results = {};
 
+/* ── Lottie 系統(V.F 機器人答題介面)──
+   素材放 proto/bot/(由 ActiveAI 既有 lottie/svg 搬運)。
+   - 活動資料可在支援 img 的地方改用 lottie:"idle.json" 或 svg:"learnbot.svg"
+   - 機器人反應 dock:任務中待機 idle,答對播 correct、答錯播 incorrect */
+const BOT = p => "bot/" + encodeURI(p);
+const LOTTIE_CACHE = {};
+function lottieData(file){
+  return LOTTIE_CACHE[file] || (LOTTIE_CACHE[file] = fetch(BOT(file)).then(r => r.json()).catch(() => null));
+}
+function lottieInto(elm, file, loop = true, onDone){
+  if (!window.lottie){ elm.hidden = true; return; }
+  const token = (elm._tok = (elm._tok || 0) + 1);
+  lottieData(file).then(data => {
+    if (!data || elm._tok !== token || !elm.isConnected) return;
+    elm._anim?.destroy();
+    elm._anim = lottie.loadAnimation({ container: elm, renderer: "svg", loop, autoplay: true, animationData: data });
+    if (!loop && onDone) elm._anim.addEventListener("complete", onDone);
+  });
+}
+function mountLotties(root){
+  root.querySelectorAll("[data-lottie]").forEach(d => {
+    if (d._mountedLot) return;
+    d._mountedLot = true;
+    lottieInto(d, d.dataset.lottie, d.dataset.loop !== "0");
+  });
+}
+/* 媒體欄位:{lottie} > {img} > {svg} > {icon/art} */
+function mediaHTML(o, kind){
+  if (!o) return "";
+  if (o.lottie) return `<div class="lot ${kind === "small" ? "small" : ""}" data-lottie="${o.lottie}"></div>`;
+  if (o.img) return `<img class="${kind === "card" ? "" : "sc-img"}" src="${PIMG(o.img)}" alt="">`;
+  if (o.svg) return `<img class="${kind === "card" ? "isvg" : "sc-svg"}" src="${BOT(o.svg)}" alt="">`;
+  if (o.art) return `<div class="art">${o.art}</div>`;
+  if (o.icon) return `<div class="art">${o.icon}</div>`;
+  return "";
+}
+/* 機器人反應 dock */
+const BOT_FILES = { idle: "idle.json", ok: "correct.json", no: "incorrect.json" };
+let botBusy = false;
+function botDockShow(file, loop, onDone){
+  const dock = $("#bot-dock");
+  dock.hidden = false;
+  lottieInto(dock, file, loop, onDone);
+}
+function botIdle(){
+  const st = steps[stepIdx];
+  botBusy = false;
+  botDockShow((st && st.bot) || BOT_FILES.idle, true);
+}
+function botReact(kind){
+  if (!window.lottie) return;
+  botBusy = true;
+  botDockShow(BOT_FILES[kind], false, () => { if (botBusy) botIdle(); });
+}
+function botHide(){ const d = $("#bot-dock"); d.hidden = true; d._anim?.destroy(); d._anim = null; }
+
 /* ── 選單 ── */
 function renderMenu(){
   const grid = $("#mod-grid");
@@ -77,6 +133,7 @@ function startModule(mod, verKey){
 }
 function quitToMenu(){
   speechSynthesis?.cancel();
+  botHide();
   ["#stage", "#dialog", "#task", "#summary"].forEach(s => $(s).style.display = "none");
   $("#menu").style.display = "block";
 }
@@ -154,6 +211,7 @@ function openTask(st){
   actIdx = 0;
   $("#dialog").style.display = "none";
   $("#task").style.display = "block";
+  botIdle();
   const col = DOMAIN_COLORS[MOD.domain];
   const meta = MOD.compMeta[st.comp];
   $("#t-ctag").textContent = meta.label;
@@ -172,6 +230,7 @@ function taskNext(st){
   actIdx++;
   if (actIdx >= st.acts.length){
     $("#task").style.display = "none";
+    botHide();
     nextStep();
   } else renderAct(st);
 }
@@ -185,6 +244,7 @@ function setProg(st){
 /* ── 對/錯共用 UI ── */
 function panel(){ return document.querySelector(".task-panel"); }
 function flashOK(then){
+  botReact("ok");
   const o = document.createElement("div");
   o.className = "flash-ok";
   o.innerHTML = "<span>✅</span>";
@@ -194,6 +254,7 @@ function flashOK(then){
   setTimeout(() => { o.remove(); then(); }, 850);
 }
 function failUI(f, actions, hint, onRetry){
+  botReact("no");
   panel().classList.remove("shake"); void panel().offsetWidth;
   panel().classList.add("shake");
   f.className = "feedback bad";
@@ -232,15 +293,13 @@ function renderAct(st){
      conveyor: renderConveyor, chips: renderChips, seq: renderSeq,
      feed: renderFeed, dressup: renderDressup,
    }[act.type])(st, act, body);
+  mountLotties(body);
 }
 
 /* ── mcq(答錯→再試一次直到對)── */
 function renderMcq(st, act, body){
-  if (act.scenario || act.art || act.img){
-    const sc = el("scenario",
-      (act.img ? `<img class="sc-img" src="${PIMG(act.img)}" alt="">` : "") +
-      (act.art ? `<div class="art">${act.art}</div>` : "") +
-      (act.scenario || ""));
+  if (act.scenario || act.art || act.img || act.svg || act.lottie){
+    const sc = el("scenario", mediaHTML(act) + (act.scenario || ""));
     body.appendChild(sc);
   }
   body.appendChild(el("q-text", act.q, "p"));
@@ -290,9 +349,11 @@ function renderImgpick(st, act, body){
     cards.forEach(c => { c.disabled = false; c.classList.remove("bad"); });
   }
   act.opts.forEach(o => {
-    const c = el("ipcard",
-      (o.img ? `<img src="${PIMG(o.img)}" alt="">` : `<div class="ipemoji">${o.icon || "❓"}</div>`) +
-      (o.label ? `<span>${o.label}</span>` : ""), "button");
+    const media = o.img ? `<img src="${PIMG(o.img)}" alt="">` :
+      o.svg ? `<img class="isvg" src="${BOT(o.svg)}" alt="">` :
+      o.lottie ? `<div class="lot" data-lottie="${o.lottie}"></div>` :
+      `<div class="ipemoji">${o.icon || "❓"}</div>`;
+    const c = el("ipcard", media + (o.label ? `<span>${o.label}</span>` : ""), "button");
     c.type = "button";
     c.addEventListener("click", () => {
       if (o.ok){
@@ -318,12 +379,13 @@ function renderSort2(st, act, body){
   const item = act.items[act._i];
   if (act.q) body.appendChild(el("q-text", act.q, "p"));
   const sc = el("scenario",
-    (item.img ? `<img class="sc-img" src="${PIMG(item.img)}" alt="">` : `<div class="art">${item.icon || "❓"}</div>`) +
+    (mediaHTML(item) || `<div class="art">❓</div>`) +
     `<div style="text-align:center;font-weight:900;font-size:16px">${item.label}</div>` +
     (item.desc ? `<div style="text-align:center;color:var(--ink-2);font-size:13.5px;margin-top:2px">${item.desc}</div>` : ""));
   body.appendChild(sc);
   speak(item.label + (item.desc ? "。" + item.desc : ""));
-  const wrap = el("opts grid2");
+  const visualBuckets = act.buckets.some(b => b.img || b.svg || b.lottie);
+  const wrap = el("opts grid2" + (visualBuckets ? " bucket-cards" : ""));
   const f = fbEl();
   const actions = el("task-actions");
   act._first = act._first ?? {};
@@ -339,7 +401,12 @@ function renderSort2(st, act, body){
     bs.forEach(b => { b.disabled = false; b.classList.remove("picked-bad"); });
   }
   act.buckets.forEach(bk => {
-    const b = el("opt", `<span class="oicon">${bk.icon || ""}</span><span>${bk.label}</span>`, "button");
+    const bkMedia = bk.img ? `<img class="bimg" src="${PIMG(bk.img)}" alt="">` :
+      bk.svg ? `<img class="bimg" src="${BOT(bk.svg)}" alt="">` :
+      bk.lottie ? `<div class="lot" data-lottie="${bk.lottie}"></div>` : "";
+    const b = el("opt",
+      (visualBuckets ? bkMedia : `<span class="oicon">${bk.icon || ""}</span>`) +
+      `<span>${(visualBuckets && bk.icon ? bk.icon + " " : "") + bk.label}</span>`, "button");
     b.type = "button";
     b.addEventListener("click", () => {
       const ok = item.bucket === bk.id;
@@ -569,6 +636,8 @@ function renderChat(st, act, body){
 function renderInfo(st, act, body){
   if (act.title) body.appendChild(el("q-text", act.title, "p"));
   if (act.img) body.appendChild(el("", `<img class="info-img" src="${PIMG(act.img)}" alt="">`));
+  if (act.svg) body.appendChild(el("", `<img class="info-svg" src="${BOT(act.svg)}" alt="">`));
+  if (act.lottie) body.appendChild(el("", `<div class="lot" data-lottie="${act.lottie}"></div>`));
   if (act.art) body.appendChild(el("info-art", act.art));
   if (act.body) body.appendChild(el("info-body", act.body));
   if (act.acc != null)
@@ -697,7 +766,7 @@ function renderOxrush(st, act, body){
   act._i = act._i ?? 0;
   const c = act.cards[act._i];
   body.appendChild(el("q-text", act.q || "這個說法對嗎?", "p"));
-  const card = el("oxcard", (c.icon ? `<div class="art">${c.icon}</div>` : "") + `<p>${c.text}</p>`);
+  const card = el("oxcard", mediaHTML(c) + `<p>${c.text}</p>`);
   body.appendChild(card);
   speak(c.text);
   const btns = el("oxbtns");
@@ -744,13 +813,13 @@ function renderStamp(st, act, body){
   const wrap = el("stamp-wrap" + (act.ev ? "" : " single"));
   const outPanel = el("stamp-panel out",
     `<h5>${act.out.label || "AI 的輸出"}</h5>` +
-    (act.out.img ? `<img src="${PIMG(act.out.img)}" alt="">` : "") +
+    mediaHTML({ img: act.out.img, svg: act.out.svg, lottie: act.out.lottie }, "card") +
     (act.out.text ? `<div class="stamp-text">${act.out.text}</div>` : ""));
   wrap.appendChild(outPanel);
   if (act.ev){
     wrap.appendChild(el("stamp-panel ev",
       `<h5>${act.ev.label || "證據"}</h5>` +
-      (act.ev.img ? `<img src="${PIMG(act.ev.img)}" alt="">` : "") +
+      mediaHTML({ img: act.ev.img, svg: act.ev.svg, lottie: act.ev.lottie }, "card") +
       (act.ev.text ? `<div class="stamp-text">${act.ev.text}</div>` : "")));
   }
   body.appendChild(wrap);
@@ -1103,7 +1172,7 @@ function renderDressup(st, act, body){
   body.appendChild(el("q-text", act.q, "p"));
   const row = el("dress-row");
   const custCard = el("dress-cust",
-    (cust.img ? `<img src="${PIMG(cust.img)}" alt="">` : `<div class="art">${cust.icon || "🙂"}</div>`) +
+    (mediaHTML(cust, "card") || `<div class="art">🙂</div>`) +
     `<p>「${cust.quote}」</p>`);
   row.appendChild(custCard);
   const baby = babyAvatar({ eyes: "✦", worn: act._worn });

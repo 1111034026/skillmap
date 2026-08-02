@@ -1,0 +1,1 @@
+    lottieInto(d, d.dataset.lottie, d.dataset.loop !== "0");
