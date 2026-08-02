@@ -409,6 +409,49 @@
     .dress-row{grid-template-columns:1fr}
   }
 
+  /* trainlab 訓練資料標注 */
+  .tl-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:12px;margin-bottom:12px}
+  .tl-pool{background:var(--accent-soft, #EBF1FE);background:#EDF3FE;border:2px solid #C9D8FB;
+    border-radius:16px;padding:12px}
+  .tl-pool h5,.tl-bin h5{font-size:13px;font-weight:900;color:var(--ink-2);margin-bottom:8px;
+    display:flex;align-items:center;gap:6px}
+  .tl-bin h5 b{color:var(--accent-deep, #2A56D0);color:#2A56D0}
+  .tl-bin h5 .tl-count{margin-left:auto;font-size:16px;font-weight:900}
+  .tl-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tl-card{border:2.5px solid var(--line);border-radius:12px;background:#fff;padding:6px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:800;
+    cursor:grab;transition:all .15s}
+  .tl-card img{width:100%;height:64px;object-fit:cover;border-radius:8px}
+  .tl-card .tl-emoji{font-size:40px;line-height:64px}
+  .tl-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .tl-card.tl-sel{border-color:var(--accent);background:var(--accent-soft);
+    box-shadow:0 0 0 3px rgba(59,111,246,.25)}
+  .tl-card.hidden-card{display:none}
+  .tl-left{font-size:12px;font-weight:800;color:var(--ink-2);text-align:right;margin-top:8px}
+  .tl-bins{display:flex;flex-direction:column;gap:10px}
+  .tl-bin{background:#fff;border:2.5px dashed var(--line);border-radius:16px;padding:10px 12px;
+    cursor:pointer;transition:all .15s;flex:1}
+  .tl-bin.tl-hover,.tl-bin:hover{border-color:var(--accent);background:#F5F9FF}
+  .tl-binrow{display:flex;flex-wrap:wrap;gap:6px;min-height:52px}
+  .tl-thumb{position:relative;width:48px;height:48px;border:2px solid var(--line);border-radius:9px;
+    overflow:hidden;background:#fff;padding:0}
+  .tl-thumb img{width:100%;height:100%;object-fit:cover}
+  .tl-thumb .tl-emoji{font-size:30px;line-height:44px;display:block;text-align:center}
+  .tl-thumb:not(.locked):hover{border-color:var(--bad)}
+  .tl-thumb.locked{opacity:.65;pointer-events:none}
+  .tl-thumb .lockmark{position:absolute;right:0;bottom:0;font-size:11px}
+  .task-panel.tl-training{animation:bubblePot .25s ease-in-out infinite alternate}
+  .tl-tests{background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+  .tl-tests h5{font-size:13.5px;font-weight:900;margin-bottom:8px}
+  .tl-test{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:14px;font-weight:700;
+    animation:popIn .35s}
+  .tl-test img{width:44px;height:44px;object-fit:cover;border-radius:8px;border:2px solid var(--line)}
+  .tl-test .tl-emoji{font-size:32px}
+  .tl-test .tl-arrow{color:var(--ink-3);font-weight:900}
+  .tl-test b{color:#2A56D0}
+  .tl-test .tl-ok{color:var(--good);font-size:18px;font-weight:900;margin-left:auto}
+  @media (max-width:720px){.tl-wrap{grid-template-columns:1fr}}
+
   /* ── V.F:Lottie 機器人答題介面 ── */
   #bot-dock{position:fixed;left:18px;bottom:14px;width:150px;height:150px;z-index:11;
     pointer-events:none;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35))}

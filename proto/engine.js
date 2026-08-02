@@ -291,7 +291,7 @@ function renderAct(st){
      tokens: renderTokens, oxrush: renderOxrush, stamp: renderStamp, spot: renderSpot,
      balloons: renderBalloons, cauldron: renderCauldron, canvas: renderCanvas,
      conveyor: renderConveyor, chips: renderChips, seq: renderSeq,
-     feed: renderFeed, dressup: renderDressup,
+     feed: renderFeed, dressup: renderDressup, trainlab: renderTrainlab,
    }[act.type])(st, act, body);
   mountLotties(body);
 }
@@ -1365,6 +1365,135 @@ function renderSeq(st, act, body){
     pool.appendChild(chip);
   });
   body.appendChild(pool); body.appendChild(f); body.appendChild(actions);
+}
+
+/* ── trainlab:訓練資料標注 → 訓練模型 → 模擬測試 ──
+   {type:"trainlab", q, classes:[{id,label,icon?}],
+    pool:[{id,img|icon,label,cls}],          // 待標注資料(點卡→點類別;可拖曳)
+    locked:[{img|icon,cls}],                 // 既有模型資料(不可動,較小)
+    tests:[{img|icon,label,expect}],          // 訓練後模擬分類展示
+    trainLabel?, hint?}
+   全對→跑測試動畫→繼續;有標錯→模型學亂,再試一次(保留已放置可修改) */
+function renderTrainlab(st, act, body){
+  act._assign = act._assign || {};
+  body.appendChild(el("q-text", act.q, "p"));
+  speak(act.q);
+  const wrap = el("tl-wrap");
+  const poolPanel = el("tl-pool", `<h5>📁 資料照片</h5><div class="tl-cards"></div><p class="tl-left"></p>`);
+  const binsCol = el("tl-bins");
+  wrap.appendChild(poolPanel); wrap.appendChild(binsCol);
+  body.appendChild(wrap);
+  const cardsBox = poolPanel.querySelector(".tl-cards");
+  const leftNote = poolPanel.querySelector(".tl-left");
+  const f = fbEl();
+  const actions = el("task-actions");
+  const testArea = el("tl-tests");
+  const trainBtn = mainBtn(act.trainLabel || "🚀 訓練模型!", onTrain, true);
+  let selected = null, first = act._tlFirst === undefined, done = false;
+  const binBoxes = {};
+  function itemMedia(o, cls){
+    return o.img ? `<img class="${cls}" src="${PIMG(o.img)}" alt="">` :
+      `<span class="${cls} tl-emoji">${o.icon || "❔"}</span>`;
+  }
+  act.classes.forEach(c => {
+    const bin = el("tl-bin", `<h5>Class:<b>${c.icon || ""} ${c.label}</b><span class="tl-count"></span></h5><div class="tl-binrow"></div>`);
+    const row = bin.querySelector(".tl-binrow");
+    (act.locked || []).filter(l => l.cls === c.id).forEach(l => {
+      row.appendChild(el("tl-thumb locked", itemMedia(l, "") + `<span class="lockmark">🔒</span>`));
+    });
+    bin.addEventListener("dragover", e => { e.preventDefault(); bin.classList.add("tl-hover"); });
+    bin.addEventListener("dragleave", () => bin.classList.remove("tl-hover"));
+    bin.addEventListener("drop", e => { e.preventDefault(); bin.classList.remove("tl-hover"); if (selected) place(selected, c.id); });
+    bin.addEventListener("click", () => { if (selected) place(selected, c.id); });
+    binBoxes[c.id] = bin;
+    binsCol.appendChild(bin);
+  });
+  const cardEls = {};
+  act.pool.forEach(it => {
+    const card = el("tl-card", itemMedia(it, "") + `<span>${it.label}</span>`, "button");
+    card.type = "button"; card.draggable = true;
+    card.addEventListener("dragstart", () => { selectCard(it, card); });
+    card.addEventListener("click", () => { selectCard(it, card); });
+    cardEls[it.id] = card;
+    cardsBox.appendChild(card);
+  });
+  function selectCard(it, card){
+    if (done) return;
+    Object.values(cardEls).forEach(x => x.classList.remove("tl-sel"));
+    selected = it;
+    card.classList.add("tl-sel");
+  }
+  function place(it, clsId){
+    if (done) return;
+    act._assign[it.id] = clsId;
+    const card = cardEls[it.id];
+    card.classList.add("hidden-card");
+    card.classList.remove("tl-sel");
+    const thumb = el("tl-thumb", itemMedia(it, ""), "button");
+    thumb.type = "button";
+    thumb.title = it.label + "(點擊取回)";
+    thumb.addEventListener("click", e => {
+      if (done) return;
+      e.stopPropagation();
+      delete act._assign[it.id];
+      thumb.remove();
+      card.classList.remove("hidden-card");
+      refresh();
+    });
+    binBoxes[clsId].querySelector(".tl-binrow").appendChild(thumb);
+    selected = null;
+    refresh();
+  }
+  function refresh(){
+    const remaining = act.pool.filter(it => !act._assign[it.id]).length;
+    leftNote.textContent = remaining ? `還剩 ${remaining} 張` : "全部放好了!";
+    act.classes.forEach(c => {
+      const n = (act.locked || []).filter(l => l.cls === c.id).length +
+        act.pool.filter(it => act._assign[it.id] === c.id).length;
+      binBoxes[c.id].querySelector(".tl-count").textContent = n;
+    });
+    trainBtn.disabled = remaining > 0;
+  }
+  function onTrain(){
+    const wrongN = act.pool.filter(it => act._assign[it.id] !== it.cls).length;
+    if (first){ act._tlFirst = wrongN === 0; record(st, wrongN === 0); first = false; }
+    trainBtn.disabled = true;
+    panel().classList.add("tl-training");
+    setTimeout(() => {
+      panel().classList.remove("tl-training");
+      if (wrongN > 0){
+        failUI(f, actions, `有 ${wrongN} 張資料標錯,模型學亂了!點縮圖取回,放到對的類別`, () => {
+          f.style.display = "none";
+          actions.innerHTML = ""; actions.appendChild(trainBtn);
+          refresh();
+        });
+        return;
+      }
+      done = true;
+      testArea.innerHTML = `<h5>🔬 訓練完成!模擬測試中──</h5>`;
+      body.insertBefore(testArea, f);
+      act.tests.forEach((t, i) => {
+        setTimeout(() => {
+          const cls = act.classes.find(c => c.id === t.expect);
+          testArea.appendChild(el("tl-test",
+            itemMedia(t, "") + `<span>${t.label}</span><span class="tl-arrow">→</span>` +
+            `<b>${cls.icon || ""} ${cls.label}</b><span class="tl-ok">✓</span>`));
+          speak(t.label + ",分到" + cls.label);
+          if (i === act.tests.length - 1){
+            setTimeout(() => {
+              actions.innerHTML = "";
+              actions.appendChild(mainBtn("繼續 →", () => taskNext(st)));
+              botReact("ok");
+            }, 700);
+          }
+        }, 800 * (i + 1));
+      });
+    }, 1100);
+  }
+  refresh();
+  body.appendChild(f); body.appendChild(actions);
+  actions.appendChild(trainBtn);
+  body.appendChild(el("", `<p style="font-size:12.5px;color:var(--ink-2);text-align:center;margin-top:8px">${act.hint || "點一張照片,再點右邊的類別(也可以拖過去);放錯了點縮圖取回"}</p>`));
 }
 
 /* ── 總結 ── */
