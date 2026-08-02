@@ -76,7 +76,7 @@ proto/
 
 ## 5. 目前狀態與下一步
 
-**狀態**:A–D 版全部實作完成並驗證;**V.E 遊戲版:問《真相偵探社》與用《螢光音樂祭》已實作完成並驗證**(引擎 v3 新增:spot 手電筒 dark 模式、balloons 謠言氣球、cauldron 魔藥大鍋、canvas 舞台拼裝、pairs board 證據板風格、oxrush/stamp 自訂按鈕;新素材 crane-interior/stage-lit/stage-dim/fireworks-finale)。管《瘋狂訂單日》與造《AI 寶寶養成記》尚未實作(企劃在 PLAN-games-E)。
+**狀態**:A–E 版全部實作完成並驗證。**V.E 四款遊戲齊全**:問《真相偵探社》(手電筒蒐證/證據板/審問室/謠言氣球)、用《螢光音樂祭》(魔藥大鍋/舞台拼裝/鑑定師)、管《瘋狂訂單日》(輸送帶分流/晶片安裝+規則爆炸動畫/超級訂單排序)、造《AI 寶寶養成記》(餵資料→寶寶表情台詞反映資料偏差/配件工坊 dress-up/畢業典禮)。引擎 v4 共 20 種活動型(新增 conveyor/chips/seq/feed/dressup;babyAvatar 狀態機:baby-bot.webp 空白臉+emoji 疊加眼睛/嘴/四個配件槽/對話泡泡)。
 **下一步(等 PO 圈選後執行)** — `PLAN-games-E.zh-TW.md` 末尾 5 個 review 問題:
 1. 四個遊戲類型方向 OK?
 2. 直立切片先做哪款?(建議《AI 寶寶養成記》)

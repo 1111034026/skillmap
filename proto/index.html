@@ -328,6 +328,87 @@
   .tray-sticker:hover{transform:translateY(-3px)}
   .tray-sticker.sel{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.12)}
 
+  /* AI 寶寶 avatar */
+  .baby{position:relative;width:min(240px,58vw);margin:0 auto 12px}
+  .baby img{width:100%}
+  .b-eye{position:absolute;font-size:26px;font-style:normal}
+  .b-eye.l{left:38%;top:31%}
+  .b-eye.r{left:55%;top:31%}
+  .b-eye:empty::before{content:"✦"}
+  .b-eye{color:#7FE3FF;text-shadow:0 0 8px rgba(127,227,255,.8)}
+  .b-mouth{position:absolute;left:47%;top:40%;font-size:20px;color:#7FE3FF;
+    text-shadow:0 0 8px rgba(127,227,255,.8)}
+  .b-acc{position:absolute;font-size:34px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+  .b-acc.head{left:44%;top:2%}
+  .b-acc.face{left:44%;top:28%;font-size:40px}
+  .b-acc.left{left:12%;top:46%}
+  .b-acc.right{right:12%;top:44%}
+  .b-say{position:absolute;right:-8%;top:-4%;max-width:170px;background:#fff;
+    border:2.5px solid var(--ink);border-radius:14px;padding:8px 12px;font-size:13.5px;
+    font-weight:800;box-shadow:0 6px 14px rgba(0,0,0,.15);z-index:2}
+  .b-say::after{content:"";position:absolute;left:14px;bottom:-9px;border:9px solid transparent;
+    border-top-color:var(--ink);border-bottom:0}
+  @keyframes babyBounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-14px) rotate(-2deg)}60%{transform:translateY(0)}80%{transform:translateY(-6px)}}
+  .baby.b-bounce{animation:babyBounce .7s}
+
+  /* dressup */
+  .dress-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center;margin-bottom:12px}
+  .dress-cust{background:#fff;border:2.5px solid var(--line);border-radius:16px;padding:12px;text-align:center}
+  .dress-cust img{border-radius:12px;max-height:170px;object-fit:cover;margin:0 auto 8px}
+  .dress-cust .art{font-size:56px}
+  .dress-cust p{font-size:14.5px;font-weight:700}
+  .dress-cust.cust-happy{border-color:var(--good);background:var(--good-soft)}
+
+  /* conveyor 輸送帶 */
+  .belt{position:relative;height:132px;border-radius:14px;overflow:hidden;margin-bottom:14px;
+    background:repeating-linear-gradient(90deg,#4A4038 0 26px,#5B5148 26px 52px);
+    border:3px solid var(--ink);animation:beltMove 1.2s linear infinite;background-size:52px 100%}
+  @keyframes beltMove{from{background-position:0 0}to{background-position:52px 0}}
+  .belt-ball{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    background:#FFF9EF;border:3px solid var(--ink);border-radius:16px;padding:8px 16px;
+    display:flex;align-items:center;gap:10px;box-shadow:0 8px 18px rgba(0,0,0,.3);
+    animation:ballIn .5s ease-out}
+  @keyframes ballIn{from{left:-30%}to{left:50%}}
+  .belt-ball .ball-icon{font-size:34px}
+  .belt-ball .ball-label{font-size:14.5px;font-weight:900;max-width:300px}
+  .belt-ball.ball-out{transition:all .4s;top:130%;opacity:0}
+  .stations{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .station{border:3px solid var(--line);border-radius:16px;background:#fff;padding:12px 6px;
+    display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s}
+  .station .st-icon{font-size:36px}
+  .station small{font-size:12.5px;font-weight:900;color:var(--ink-2)}
+  .station:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .station.st-good{border-color:var(--good);background:var(--good-soft);animation:popIn .3s}
+  .station.st-bad{border-color:var(--bad);background:var(--bad-soft);animation:shakeX .35s}
+
+  /* chips 產線 */
+  .line-card{position:relative;background:#fff;border:2.5px solid var(--line);border-radius:16px;
+    padding:16px;text-align:center;margin-bottom:14px;overflow:hidden}
+  .line-card .art{font-size:44px}
+  .line-label{font-size:16px;font-weight:900;margin-top:4px}
+  .line-desc{font-size:13px;color:var(--ink-2)}
+  .line-card.line-run{border-color:var(--good);background:var(--good-soft)}
+  .rule-explosion{position:absolute;inset:0;background:rgba(255,250,235,.96);overflow:hidden;
+    font-size:14px;font-weight:800;color:var(--bad);text-align:left;padding:0 18px}
+  .rule-explosion div{animation:rulesScroll 1.2s linear forwards}
+  @keyframes rulesScroll{from{transform:translateY(100%)}to{transform:translateY(-160%)}}
+
+  /* seq 排序 */
+  .seq-slots{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+    margin-bottom:14px}
+  .seq-slot{min-width:130px;min-height:58px;border:2.5px dashed var(--line);border-radius:14px;
+    background:#FFFDF8;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:6px 10px}
+  .seq-slot small{font-size:11px;font-weight:900;color:var(--ink-3)}
+  .seq-slot span{font-size:14px;font-weight:800}
+  .seq-slot.tok-good{border-color:var(--good);background:var(--good-soft)}
+  .seq-slot.tok-bad{border-color:var(--bad);background:var(--bad-soft)}
+  .seq-arrow{font-size:22px;font-weight:900;color:var(--ink-3)}
+  @media (max-width:720px){
+    .stations{grid-template-columns:1fr 1fr}
+    .dress-row{grid-template-columns:1fr}
+  }
+
   /* ── 總結 ── */
   #summary{position:absolute;inset:0;z-index:12;display:none;background:rgba(15,10,5,.6);
     backdrop-filter:blur(4px);overflow-y:auto;padding:5vh 16px}

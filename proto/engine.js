@@ -229,6 +229,8 @@ function renderAct(st){
      multi: renderMulti, chat: renderChat, info: renderInfo, pairs: renderPairs,
      tokens: renderTokens, oxrush: renderOxrush, stamp: renderStamp, spot: renderSpot,
      balloons: renderBalloons, cauldron: renderCauldron, canvas: renderCanvas,
+     conveyor: renderConveyor, chips: renderChips, seq: renderSeq,
+     feed: renderFeed, dressup: renderDressup,
    }[act.type])(st, act, body);
 }
 
@@ -993,6 +995,307 @@ function renderCanvas(st, act, body){
   body.appendChild(el("", `<p style="font-size:13px;color:var(--ink-2);text-align:center;margin-top:6px">${act.hint || `點貼紙,再點舞台上想放的位置(至少 ${act.min || 3} 個;點放好的貼紙可移除)`}</p>`));
   actions.appendChild(doneBtn);
   body.appendChild(actions);
+}
+
+/* ── baby avatar:AI 寶寶(表情/配件/台詞隨狀態變)── */
+function babyAvatar(state){
+  const b = el("baby");
+  b.innerHTML = `
+    <img src="${PIMG("baby-bot.webp")}" alt="AI 寶寶">
+    <span class="b-eye l"></span><span class="b-eye r"></span>
+    <span class="b-mouth"></span>
+    <span class="b-acc head"></span><span class="b-acc face"></span>
+    <span class="b-acc left"></span><span class="b-acc right"></span>
+    <div class="b-say" hidden></div>`;
+  b._set = s => {
+    s = s || {};
+    b.querySelectorAll(".b-eye").forEach(e => e.textContent = s.eyes || "✦");
+    b.querySelector(".b-mouth").textContent = s.mouth || "‿";
+    const worn = s.worn || {};
+    ["head", "face", "left", "right"].forEach(slot => {
+      b.querySelector(".b-acc." + slot).textContent = worn[slot] || "";
+    });
+    const say = b.querySelector(".b-say");
+    if (s.say){ say.hidden = false; say.textContent = s.say; speak(s.say); }
+    else say.hidden = true;
+    if (s.bounce){ b.classList.remove("b-bounce"); void b.offsetWidth; b.classList.add("b-bounce"); }
+  };
+  b._set(state || {});
+  return b;
+}
+
+/* ── feed:餵資料養成(選滿→開飯→寶寶長成資料的樣子)── */
+function renderFeed(st, act, body){
+  body.appendChild(el("q-text", act.q, "p"));
+  speak(act.q);
+  act._worn = act._worn || {};
+  const baby = babyAvatar({ ...(act.baby || {}), worn: act._worn });
+  body.appendChild(baby);
+  if (act.note) body.appendChild(el("", `<p style="font-size:13.5px;color:var(--ink-2);text-align:center;margin:-4px 0 10px">${act.note}</p>`));
+  const grid = el("multi-grid");
+  const selOrder = [];
+  const btnOf = {};
+  const f = fbEl();
+  const actions = el("task-actions");
+  const feedBtn = mainBtn("🍼 開飯!", onFeed, true);
+  let first = true, done = false;
+  act.opts.forEach(o => {
+    const b = el("mopt", `<span class="micon">${o.icon || ""}</span>${o.label}`, "button");
+    b.type = "button"; btnOf[o.id] = b;
+    b.addEventListener("click", () => {
+      if (done) return;
+      const i = selOrder.indexOf(o.id);
+      if (i >= 0){ selOrder.splice(i, 1); b.classList.remove("sel"); }
+      else {
+        if (selOrder.length >= act.need){
+          const old = selOrder.shift();
+          btnOf[old]?.classList.remove("sel");
+        }
+        selOrder.push(o.id); b.classList.add("sel");
+      }
+      feedBtn.disabled = selOrder.length !== act.need;
+    });
+    grid.appendChild(b);
+  });
+  function onFeed(){
+    const chosen = [...selOrder];
+    const okIds = act.opts.filter(o => o.ok).map(o => o.id);
+    const allOk = chosen.every(id => okIds.includes(id));
+    let out = (act.outcomes || []).find(oc =>
+      oc.when === "pass" ? allOk : oc.has ? oc.has.every(id => chosen.includes(id)) : false);
+    if (!out) out = (act.outcomes || []).find(oc => oc.when === "default") || { pass: allOk, msg: "" };
+    const pass = out.pass ?? allOk;
+    if (first && !act.explore){ record(st, pass); first = false; }
+    baby._set({ ...(out.baby || {}), worn: act._worn, bounce: true });
+    const acc = out.acc != null ?
+      `<div class="acc-meter"><i style="width:${out.acc}%"></i><span>寶寶答對率 ${out.acc}%</span></div>` : "";
+    actions.innerHTML = "";
+    setTimeout(() => {
+      if (pass){
+        done = true;
+        f.className = "feedback good";
+        f.innerHTML = `<span class="fico">💚</span><div><b>${out.title || "吃飽飽!"}</b>${out.msg || ""}${acc}</div>`;
+        f.style.display = "flex";
+        actions.appendChild(mainBtn("繼續 →", () => taskNext(st)));
+      } else {
+        panel().classList.remove("shake"); void panel().offsetWidth; panel().classList.add("shake");
+        f.className = "feedback bad";
+        f.innerHTML = `<span class="fico">😵</span><div><b>${out.title || "好像吃壞了…"}</b>${out.msg || ""}${acc}</div>`;
+        f.style.display = "flex";
+        actions.appendChild(mainBtn("重新配餐", () => {
+          f.style.display = "none";
+          baby._set({ ...(act.baby || {}), worn: act._worn });
+          actions.innerHTML = ""; actions.appendChild(feedBtn);
+          feedBtn.disabled = selOrder.length !== act.need;
+        }));
+      }
+    }, 700);
+  }
+  actions.appendChild(feedBtn);
+  body.appendChild(grid); body.appendChild(f); body.appendChild(actions);
+}
+
+/* ── dressup:顧客心聲→幫寶寶裝備配件(配件會一直戴著)── */
+function renderDressup(st, act, body){
+  act._i = act._i ?? 0;
+  act._worn = act._worn || {};
+  const cust = act.customers[act._i];
+  body.appendChild(el("q-text", act.q, "p"));
+  const row = el("dress-row");
+  const custCard = el("dress-cust",
+    (cust.img ? `<img src="${PIMG(cust.img)}" alt="">` : `<div class="art">${cust.icon || "🙂"}</div>`) +
+    `<p>「${cust.quote}」</p>`);
+  row.appendChild(custCard);
+  const baby = babyAvatar({ eyes: "✦", worn: act._worn });
+  row.appendChild(baby);
+  body.appendChild(row);
+  speak(cust.quote);
+  const tray = el("opts grid2");
+  const f = fbEl();
+  const actions = el("task-actions");
+  act._first = act._first ?? {};
+  const key = act._i;
+  const btns = [];
+  function reset(){
+    f.style.display = "none"; actions.innerHTML = "";
+    btns.forEach(b => { b.disabled = false; b.classList.remove("picked-bad"); });
+  }
+  act.tray.forEach(t => {
+    const b = el("opt", `<span class="oicon">${t.icon}</span><span>${t.label}</span>`, "button");
+    b.type = "button";
+    if (Object.values(act._worn).includes(t.icon)){ b.disabled = true; b.style.opacity = .35; }
+    b.addEventListener("click", () => {
+      if (t.id === cust.acc){
+        if (act._first[key] === undefined){ act._first[key] = true; record(st, true); }
+        act._worn[t.slot] = t.icon;
+        baby._set({ eyes: "✨", worn: act._worn, bounce: true, say: cust.thanks || "交給我!" });
+        custCard.classList.add("cust-happy");
+        btns.forEach(x => x.disabled = true);
+        flashOK(() => {
+          act._i++;
+          if (act._i >= act.customers.length){ act._i = 0; taskNext(st); }
+          else renderAct(st);
+        });
+      } else {
+        if (act._first[key] === undefined){ act._first[key] = false; record(st, false); }
+        b.classList.add("picked-bad");
+        btns.forEach(x => x.disabled = true);
+        failUI(f, actions, t.fb || cust.fb || "想想這位顧客需要什麼?", reset);
+      }
+    });
+    btns.push(b); tray.appendChild(b);
+  });
+  body.appendChild(tray); body.appendChild(f); body.appendChild(actions);
+  body.appendChild(el("", `<p style="font-size:12.5px;color:var(--ink-2);text-align:right">顧客 ${act._i + 1} / ${act.customers.length}</p>`));
+}
+
+/* ── conveyor:輸送帶分流(任務球→選工作站)── */
+function renderConveyor(st, act, body){
+  act._i = act._i ?? 0;
+  const ball = act.balls[act._i];
+  body.appendChild(el("q-text", act.q, "p"));
+  const belt = el("belt");
+  const ballEl = el("belt-ball", `<span class="ball-icon">${ball.icon}</span><span class="ball-label">${ball.label}</span>`);
+  belt.appendChild(ballEl);
+  body.appendChild(belt);
+  speak(ball.label);
+  const row = el("stations");
+  const f = fbEl();
+  const actions = el("task-actions");
+  act._first = act._first ?? {};
+  const key = act._i;
+  const btns = [];
+  function reset(){
+    f.style.display = "none"; actions.innerHTML = "";
+    btns.forEach(b => { b.disabled = false; b.classList.remove("st-bad"); });
+  }
+  act.stations.forEach(s => {
+    const b = el("station", `<span class="st-icon">${s.icon}</span><small>${s.label}</small>`, "button");
+    b.type = "button";
+    b.addEventListener("click", () => {
+      if (s.id === ball.station){
+        if (act._first[key] === undefined){ act._first[key] = true; record(st, true); }
+        b.classList.add("st-good");
+        ballEl.classList.add("ball-out");
+        btns.forEach(x => x.disabled = true);
+        flashOK(() => {
+          act._i++;
+          if (act._i >= act.balls.length){ act._i = 0; taskNext(st); }
+          else renderAct(st);
+        });
+      } else {
+        if (act._first[key] === undefined){ act._first[key] = false; record(st, false); }
+        b.classList.add("st-bad");
+        btns.forEach(x => x.disabled = true);
+        failUI(f, actions, ball.fb || "送錯站啦!再想想這任務需要什麼能力", reset);
+      }
+    });
+    btns.push(b); row.appendChild(b);
+  });
+  body.appendChild(row); body.appendChild(f); body.appendChild(actions);
+  body.appendChild(el("", `<p style="font-size:12.5px;color:var(--ink-2);text-align:right">訂單 ${act._i + 1} / ${act.balls.length}</p>`));
+}
+
+/* ── chips:產線裝晶片(規則📏 vs 學習🧠;裝錯有災難動畫)── */
+function renderChips(st, act, body){
+  act._i = act._i ?? 0;
+  const line = act.lines[act._i];
+  body.appendChild(el("q-text", act.q, "p"));
+  const card = el("line-card",
+    `<div class="art">${line.icon}</div><div class="line-label">${line.label}</div>` +
+    (line.desc ? `<div class="line-desc">${line.desc}</div>` : ""));
+  body.appendChild(card);
+  speak(line.label);
+  const row = el("opts grid2");
+  const f = fbEl();
+  const actions = el("task-actions");
+  act._first = act._first ?? {};
+  const key = act._i;
+  const btns = [];
+  function reset(){
+    f.style.display = "none"; actions.innerHTML = "";
+    btns.forEach(b => { b.disabled = false; b.classList.remove("picked-bad") });
+    card.querySelector(".rule-explosion")?.remove();
+  }
+  [{ id: "rule", icon: "📏", label: "規則晶片" }, { id: "learn", icon: "🧠", label: "學習晶片" }].forEach(c => {
+    const b = el("opt", `<span class="oicon">${c.icon}</span><span>${c.label}</span>`, "button");
+    b.type = "button";
+    b.addEventListener("click", () => {
+      if (c.id === line.chip){
+        if (act._first[key] === undefined){ act._first[key] = true; record(st, true); }
+        b.classList.add("picked-good");
+        card.classList.add("line-run");
+        btns.forEach(x => x.disabled = true);
+        flashOK(() => {
+          act._i++;
+          if (act._i >= act.lines.length){ act._i = 0; taskNext(st); }
+          else renderAct(st);
+        });
+      } else {
+        if (act._first[key] === undefined){ act._first[key] = false; record(st, false); }
+        b.classList.add("picked-bad");
+        btns.forEach(x => x.disabled = true);
+        if (c.id === "rule" && line.explode){
+          const ex = el("rule-explosion",
+            "<div>" + ["缺角算壞…", "太扁算壞…", "裂開算壞…", "彎的算壞…", "顏色淡算壞…", "第 47 條…", "第 128 條…", "第 999 條…!!"].join("<br>") + "</div>");
+          card.appendChild(ex);
+        }
+        setTimeout(() => failUI(f, actions, line.fb || "", reset), line.explode && c.id === "rule" ? 1200 : 0);
+      }
+    });
+    btns.push(b); row.appendChild(b);
+  });
+  body.appendChild(row); body.appendChild(f); body.appendChild(actions);
+  body.appendChild(el("", `<p style="font-size:12.5px;color:var(--ink-2);text-align:right">產線 ${act._i + 1} / ${act.lines.length}</p>`));
+}
+
+/* ── seq:流水線排序(照正確順序點選步驟)── */
+function renderSeq(st, act, body){
+  body.appendChild(el("q-text", act.q, "p"));
+  speak(act.q);
+  const slotRow = el("seq-slots");
+  const slotEls = act.answer.map((_, i) => {
+    const s = el("seq-slot", `<small>${i + 1}</small><span></span>`);
+    slotRow.appendChild(s);
+    if (i < act.answer.length - 1) slotRow.appendChild(el("seq-arrow", "→", "span"));
+    return s;
+  });
+  body.appendChild(slotRow);
+  const pool = el("tok-chips");
+  const filled = [];
+  const f = fbEl();
+  const actions = el("task-actions");
+  let first = act._seqFirst === undefined;
+  if (!act._seqOrder) act._seqOrder = act.pool.map((_, i) => i).sort(() => Math.random() - 0.5);
+  function check(){
+    const ok = filled.every((t, i) => t.txt === act.answer[i]);
+    if (first){ act._seqFirst = ok; record(st, ok); first = false; }
+    if (ok){
+      slotEls.forEach(s => s.classList.add("tok-good"));
+      flashOK(() => { act._seqOrder = null; act._seqFirst = undefined; taskNext(st); });
+    } else {
+      slotEls.forEach(s => s.classList.add("tok-bad"));
+      failUI(f, actions, act.hint || "順序不對,想想哪一步要先做?", () => {
+        filled.splice(0).forEach(t => t.chip.classList.remove("used"));
+        slotEls.forEach(s => { s.querySelector("span").textContent = ""; s.classList.remove("tok-bad"); });
+        f.style.display = "none"; actions.innerHTML = "";
+      });
+    }
+  }
+  act._seqOrder.forEach(i => {
+    const p = act.pool[i];
+    const chip = el("tok-chip", `${p.icon || ""} ${p.label}`, "button");
+    chip.type = "button";
+    chip.addEventListener("click", () => {
+      if (chip.classList.contains("used") || filled.length >= slotEls.length) return;
+      chip.classList.add("used");
+      slotEls[filled.length].querySelector("span").textContent = `${p.icon || ""} ${p.label}`;
+      filled.push({ txt: p.label, chip });
+      if (filled.length === slotEls.length) check();
+    });
+    pool.appendChild(chip);
+  });
+  body.appendChild(pool); body.appendChild(f); body.appendChild(actions);
 }
 
 /* ── 總結 ── */
