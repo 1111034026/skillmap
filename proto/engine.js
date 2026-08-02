@@ -292,7 +292,7 @@ function renderAct(st){
      balloons: renderBalloons, cauldron: renderCauldron, canvas: renderCanvas,
      conveyor: renderConveyor, chips: renderChips, seq: renderSeq,
      feed: renderFeed, dressup: renderDressup, trainlab: renderTrainlab,
-     goalcore: renderGoalcore,
+     goalcore: renderGoalcore, meet: renderMeet,
    }[act.type])(st, act, body);
   mountLotties(body);
 }
@@ -1240,7 +1240,10 @@ function renderConveyor(st, act, body){
     btns.forEach(b => { b.disabled = false; b.classList.remove("st-bad"); });
   }
   act.stations.forEach(s => {
-    const b = el("station", `<span class="st-icon">${s.icon}</span><small>${s.label}</small>`, "button");
+    const media = s.svg ? `<img class="st-svg" src="${BOT(s.svg)}" alt="">` :
+      s.lottie ? `<div class="lot st-lot" data-lottie="${s.lottie}"></div>` :
+      `<span class="st-icon">${s.icon || ""}</span>`;
+    const b = el("station", media + `<small>${s.label}</small>`, "button");
     b.type = "button";
     b.addEventListener("click", () => {
       if (s.id === ball.station){
@@ -1495,6 +1498,47 @@ function renderTrainlab(st, act, body){
   body.appendChild(f); body.appendChild(actions);
   actions.appendChild(trainBtn);
   body.appendChild(el("", `<p style="font-size:12.5px;color:var(--ink-2);text-align:center;margin-top:8px">${act.hint || "點一張照片,再點右邊的類別(也可以拖過去);放錯了點縮圖取回"}</p>`));
+}
+
+/* ── meet:認識 AI 圖鑑──點擊每張卡片獲得介紹,全部看完才能繼續 ──
+   {type:"meet", q, items:[{id, name, desc, svg?|lottie?|img?|icon?}], hint?} */
+function renderMeet(st, act, body){
+  body.appendChild(el("q-text", act.q, "p"));
+  speak(act.q);
+  const grid = el("meet-grid");
+  const actions = el("task-actions");
+  const goBtn = mainBtn("認識完畢,出發!→", () => taskNext(st), true);
+  const visited = new Set();
+  act.items.forEach(it => {
+    const media = it.svg ? `<img class="meet-svg" src="${BOT(it.svg)}" alt="">` :
+      it.lottie ? `<div class="lot meet-lot" data-lottie="${it.lottie}"></div>` :
+      it.img ? `<img class="meet-svg" src="${PIMG(it.img)}" alt="">` :
+      `<div class="art">${it.icon || "🤖"}</div>`;
+    const card = el("meet-card",
+      media + `<b>${it.name}</b><p class="meet-desc" hidden>${it.desc}</p><span class="meet-tap">👆 點我認識</span>`,
+      "button");
+    card.type = "button";
+    card.addEventListener("click", () => {
+      if (!visited.has(it.id)){
+        visited.add(it.id);
+        card.classList.add("meet-open");
+        card.querySelector(".meet-desc").hidden = false;
+        card.querySelector(".meet-tap").textContent = "✓";
+        speak(it.name + "。" + it.desc);
+        if (visited.size === act.items.length){
+          goBtn.disabled = false;
+          botReact("ok");
+        }
+      } else {
+        speak(it.name + "。" + it.desc);
+      }
+    });
+    grid.appendChild(card);
+  });
+  body.appendChild(grid);
+  body.appendChild(el("", `<p style="font-size:13px;color:var(--ink-2);text-align:center;margin-top:8px">${act.hint || "點每一位 AI 幫手,聽聽它的自我介紹(要全部認識完喔!)"}</p>`));
+  actions.appendChild(goBtn);
+  body.appendChild(actions);
 }
 
 /* ── goalcore:AI 目標控制台 ──
