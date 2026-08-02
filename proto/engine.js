@@ -94,13 +94,17 @@ function botHide(){ const d = $("#bot-dock"); d.hidden = true; d._anim?.destroy(
 function renderMenu(){
   const grid = $("#mod-grid");
   grid.innerHTML = "";
+  const PLAY = window.PLAY_VERSIONS || null; // 學生版:每模組只放定案版本
   MODULES.forEach(m => {
     const col = DOMAIN_COLORS[m.domain];
     const card = document.createElement("div");
     card.className = "mod-card";
     const compsTxt = Object.values(m.compMeta).map(c => `${c.label}・${c.name}`).join("<br>");
-    const vers = Object.entries(m.versions).map(([k, v]) =>
-      `<button type="button" class="ver-btn" data-v="${k}"><b>版本 ${k}</b><span>${v.desc}</span></button>`).join("");
+    const vers = PLAY
+      ? (() => { const vk = PLAY[m.id];
+          return `<button type="button" class="ver-btn play-btn" data-v="${vk}"><b>▶ 開始挑戰</b><span>${m.versions[vk].desc}</span></button>`; })()
+      : Object.entries(m.versions).map(([k, v]) =>
+        `<button type="button" class="ver-btn" data-v="${k}"><b>版本 ${k}</b><span>${v.desc}</span></button>`).join("");
     card.innerHTML = `
       <div class="mod-bg" style="background-image:url('${IMG(m.bg)}')">
         <span class="tag" style="background:${col}">${m.tag}</span>
@@ -234,11 +238,21 @@ function taskNext(st){
     nextStep();
   } else renderAct(st);
 }
-function setProg(st){
-  const total = st.acts.length;
-  $("#t-prog").textContent = `${Math.min(actIdx + 1, total)} / ${total}`;
+/* 進度=整個模組所有活動合併(不分學習/測驗,學生視角一條路)*/
+function moduleActTotal(){
+  return steps.reduce((n, s) => n + (s.acts ? s.acts.length : 0), 0);
+}
+function moduleActsDone(){
+  let n = 0;
+  for (let i = 0; i < stepIdx; i++) if (steps[i].acts) n += steps[i].acts.length;
+  return n + actIdx;
+}
+function setProg(){
+  const total = moduleActTotal();
+  const done = moduleActsDone();
+  $("#t-prog").textContent = `${Math.min(done + 1, total)} / ${total}`;
   const bar = $("#t-bar-i");
-  if (bar) bar.style.width = (actIdx / total * 100) + "%";
+  if (bar) bar.style.width = (done / total * 100) + "%";
 }
 
 /* ── 對/錯共用 UI ── */
@@ -250,7 +264,7 @@ function flashOK(then){
   o.innerHTML = "<span>✅</span>";
   panel().appendChild(o);
   const bar = $("#t-bar-i");
-  if (bar) bar.style.width = "100%";
+  if (bar) bar.style.width = ((moduleActsDone() + 1) / moduleActTotal() * 100) + "%";
   setTimeout(() => { o.remove(); then(); }, 850);
 }
 function failUI(f, actions, hint, onRetry){

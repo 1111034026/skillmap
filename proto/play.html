@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>國小 AILF 模組・教學設計互動原型</title>
+<title>國小 AILF 模組・學生版(定案版本)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -560,8 +560,8 @@
 
 <div id="menu">
   <div class="menu-head">
-    <h1>國小 AILF 遊戲化模組・教學設計互動原型</h1>
-    <p>每個模組涵蓋 2 個 AILF 子素養,流程:子素養① Hook 對話 → 學習任務(鷹架)→ 測驗任務 → 子素養② 同流程 → 素養面向 Big Idea 總結。每個模組提供 A/B 兩種任務設計版本供 Review。</p>
+    <h1>國小 AILF 遊戲化模組・學生版</h1>
+    <p>每個模組只保留定案版本(問=E 偵探社・用=C 生圖/文字工坊・管=E 訂單日・造=G 訓練實驗+目標控制室),以此為基礎繼續優化。</p>
   </div>
   <div class="menu-note">
     📌 探索用原型:任務為場景上的 overlay;AI 互動皆為<b>模擬(canned 回應,不接 API)</b>;對話語音先以瀏覽器 TTS(zh-TW)代替,正式版沿用 repo 的預錄 MP3 模式(<code>public/Voice/…/&lt;台詞&gt;.mp3</code>);場景移動/NPC 靠近互動這次先不做,對話直接依序推進。測驗任務以首次作答計分,&gt;60% 視為掌握,並計算 learning gain(測驗 − 學習)。
@@ -610,6 +610,7 @@
 </div>
 
 <script src="https://unpkg.com/lottie-web@5.13.0/build/player/lottie_light.min.js"></script>
+<script>window.PLAY_VERSIONS = { engage: "E", create: "C", manage: "E", shape: "G" };</script>
 <script src="data-engage.js"></script>
 <script src="data-create.js"></script>
 <script src="data-manage.js"></script>
