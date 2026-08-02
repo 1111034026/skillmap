@@ -292,6 +292,7 @@ function renderAct(st){
      balloons: renderBalloons, cauldron: renderCauldron, canvas: renderCanvas,
      conveyor: renderConveyor, chips: renderChips, seq: renderSeq,
      feed: renderFeed, dressup: renderDressup, trainlab: renderTrainlab,
+     goalcore: renderGoalcore,
    }[act.type])(st, act, body);
   mountLotties(body);
 }
@@ -1494,6 +1495,102 @@ function renderTrainlab(st, act, body){
   body.appendChild(f); body.appendChild(actions);
   actions.appendChild(trainBtn);
   body.appendChild(el("", `<p style="font-size:12.5px;color:var(--ink-2);text-align:center;margin-top:8px">${act.hint || "點一張照片,再點右邊的類別(也可以拖過去);放錯了點縮圖取回"}</p>`));
+}
+
+/* ── goalcore:AI 目標控制台 ──
+   {type:"goalcore", q,
+    core:{label, oldGoal},                       // AI 名稱與原本的單一目標
+    badges:[{id,icon,label,ok}],                 // 目標徽章(投 1 個)
+    feats:[{id,icon,label,ok}],                  // 必要功能/資料(裝 1 個)
+    result:{text, img?, meters:[{icon,label,from,to,down?}]},  // 成功模擬
+    failText?, hint?}
+   選對徽章+功能 → 啟動模擬 → 指標動畫;選錯 → 問題還在,再試一次(首次計分) */
+function renderGoalcore(st, act, body){
+  body.appendChild(el("q-text", act.q, "p"));
+  speak(act.q);
+  const console_ = el("gc-console", `
+    <div class="gc-core">
+      <div class="gc-ring" data-lottie="searching.json"></div>
+      <div class="gc-name">${act.core.label}</div>
+      <div class="gc-old">舊目標:${act.core.oldGoal}</div>
+    </div>
+    <div class="gc-slots">
+      <div class="gc-slot" data-slot="badge"><small>🎯 新目標</small><span class="gc-empty">?</span></div>
+      <div class="gc-slot" data-slot="feat"><small>🔧 加裝</small><span class="gc-empty">?</span></div>
+    </div>`);
+  body.appendChild(console_);
+  const picked = { badge: null, feat: null };
+  const f = fbEl();
+  const actions = el("task-actions");
+  const runBtn = mainBtn("▶ 啟動模擬!", onRun, true);
+  let first = true, done = false;
+  const trays = {};
+  function makeTray(kind, title, items){
+    const tray = el("gc-tray", `<h5>${title}</h5>`);
+    const row = el("gc-tray-row");
+    items.forEach(o => {
+      const b = el("gc-chip", `<span>${o.icon}</span>${o.label}`, "button");
+      b.type = "button";
+      b.addEventListener("click", () => {
+        if (done) return;
+        row.querySelectorAll(".gc-chip").forEach(x => x.classList.remove("gc-on"));
+        b.classList.add("gc-on");
+        picked[kind] = o;
+        const slot = console_.querySelector(`[data-slot="${kind}"] span`);
+        slot.textContent = `${o.icon} ${o.label}`;
+        slot.classList.remove("gc-empty");
+        runBtn.disabled = !(picked.badge && picked.feat);
+      });
+      row.appendChild(b);
+    });
+    tray.appendChild(row);
+    trays[kind] = tray;
+    return tray;
+  }
+  body.appendChild(makeTray("badge", "🎯 目標徽章(選一個投入)", act.badges));
+  body.appendChild(makeTray("feat", "🔧 功能與資料(選一個加裝)", act.feats));
+  function onRun(){
+    const pass = picked.badge?.ok && picked.feat?.ok;
+    if (first){ record(st, !!pass); first = false; }
+    runBtn.disabled = true;
+    console_.classList.add("gc-running");
+    setTimeout(() => {
+      console_.classList.remove("gc-running");
+      if (pass){
+        done = true;
+        const meters = (act.result.meters || []).map(m => `
+          <div class="gc-meter">
+            <span class="gc-mlabel">${m.icon} ${m.label}</span>
+            <div class="gc-mbar ${m.down ? "down" : ""}"><i style="width:${m.from}%"></i></div>
+            <b>${m.from}→${m.to}</b>
+          </div>`).join("");
+        f.className = "feedback good";
+        f.innerHTML = `<span class="fico">🎯</span><div><b>模擬成功!</b>${act.result.text}${meters}</div>` +
+          (act.result.img ? `<img class="result-img" src="${PIMG(act.result.img)}" alt="">` : "");
+        f.style.display = "flex";
+        speak("模擬成功。" + act.result.text);
+        setTimeout(() => {
+          f.querySelectorAll(".gc-mbar i").forEach((bar, i) => {
+            bar.style.width = (act.result.meters[i].to) + "%";
+          });
+        }, 250);
+        botReact("ok");
+        actions.innerHTML = "";
+        actions.appendChild(mainBtn("繼續 →", () => taskNext(st)));
+      } else {
+        failUI(f, actions, act.failText || act.hint || "模擬結果:問題還在!換一個目標或裝備試試", () => {
+          f.style.display = "none";
+          picked.badge = picked.feat = null;
+          console_.querySelectorAll(".gc-slot span").forEach(s => { s.textContent = "?"; s.classList.add("gc-empty"); });
+          Object.values(trays).forEach(t => t.querySelectorAll(".gc-chip").forEach(x => x.classList.remove("gc-on")));
+          actions.innerHTML = ""; actions.appendChild(runBtn);
+          runBtn.disabled = true;
+        });
+      }
+    }, 1100);
+  }
+  actions.appendChild(runBtn);
+  body.appendChild(f); body.appendChild(actions);
 }
 
 /* ── 總結 ── */
